@@ -1,4 +1,5 @@
 from pointraing import db
+from datetime import datetime
 
 
 class Role(db.Model):
@@ -48,4 +49,10 @@ class Lab(db.Model):
     def __repr__(self):
         return "Lab('{self.name}')"
 
-# labs_grade = db.Table()
+labs_grade = db.Table('labs_grade',
+                      db.Column('lab_id', db.String, db.ForeignKey('lab.id'), primary_key=True),
+                      db.Column('user_id', db.String, db.ForeignKey('user.id'), primary_key=True),
+                      db.Column('student_id', db.String, db.ForeignKey('user.id'), primary_key=True),
+                      db.Column('value', db.Boolean, nullable=False, default=False),
+                      db.Column('date', db.DateTime, nullable=False, default=datetime.utcnow)
+                      )
