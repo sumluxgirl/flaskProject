@@ -1,6 +1,7 @@
 # flaskProject
-ball-rating system USATU
+Point rating system USATU
 ## database scheme
+![Alt-текст](./scoring system.png)
 ## Create environment
 ```
     py -3 -m venv venv
@@ -13,6 +14,7 @@ ball-rating system USATU
 ###Windows
 ```
     pip install Flask
+    pip install -U Flask-SQLAlchemy
 ```
 ##quick start
 ```
