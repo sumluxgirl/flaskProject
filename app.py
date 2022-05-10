@@ -107,7 +107,7 @@ def create_subjects():
         name='Системы сети и устройства телекоммуникации',
         count_hours=6
     )
-    db.session.add_all(subject_comp_network, subject_line_transmission, subject_telecommunication)
+    db.session.add_all([subject_comp_network, subject_line_transmission, subject_telecommunication])
     return {
         subject_comp_network,
         subject_line_transmission,
@@ -137,7 +137,7 @@ def create_labs(subjects):
         datetime=datetime.datetime(2021, 9, 21, 23, 59, 59),
         deadline=datetime.datetime(2021, 9, 28, 23, 59, 59)
     )
-    db.session.add_all(lab_comp_network, lab_line_transmission, lab_telecommunication)
+    db.session.add_all([lab_comp_network, lab_line_transmission, lab_telecommunication])
     return {
         lab_comp_network,
         lab_line_transmission,
@@ -146,7 +146,9 @@ def create_labs(subjects):
 
 
 def create_attendance():
-    return None
+    lecture = AttendanceType(id=create_id(), name='Лекция')
+    practice = AttendanceType(id=create_id(), name='Практика')
+    db.session.add_all([lecture, practice])
 
 
 def adding_data():
