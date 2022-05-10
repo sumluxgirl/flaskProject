@@ -15,6 +15,7 @@ Point rating system USATU
 ```
     pip install Flask
     pip install -U Flask-SQLAlchemy
+    pip install flask-bcrypt
 ```
 ##quick start
 ```
