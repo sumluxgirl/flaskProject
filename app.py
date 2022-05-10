@@ -1,5 +1,6 @@
 from pointraing import app, db, bcrypt
-from pointraing.models import Role, User, Group, Subject, Lab, AttendanceType, Attendance
+from pointraing.models import Role, User, Group, Subject, Lab, AttendanceType, Attendance, ActivityType, \
+    ActivitySubType, RateActivity
 import datetime
 import uuid
 
@@ -23,7 +24,7 @@ def create_users():
         name='Элина',
         patronymic='Эльмаровна',
         login='yakhina.ee',
-        hashed_password=bcrypt.generate_password_hash('yakhina.ee123').decode('utf-8'),
+        password=bcrypt.generate_password_hash('yakhina.ee123').decode('utf-8'),
         role=role_student,
         group=group424
     )
@@ -33,7 +34,7 @@ def create_users():
         name='Алексей',
         patronymic='Робертович',
         login='shilov.ar',
-        hashed_password=bcrypt.generate_password_hash('shilov.ar123').decode('utf-8'),
+        password=bcrypt.generate_password_hash('shilov.ar123').decode('utf-8'),
         role=role_student,
         group=group321
     )
@@ -43,7 +44,7 @@ def create_users():
         name='Алина',
         patronymic='Радиковна',
         login='ahkamova.ar',
-        hashed_password=bcrypt.generate_password_hash('ahkamova.ar123').decode('utf-8'),
+        password=bcrypt.generate_password_hash('ahkamova.ar123').decode('utf-8'),
         role=role_student,
         group=group424
     )
@@ -53,7 +54,7 @@ def create_users():
         name='Ярослав',
         patronymic='Константичнович',
         login='pavochkin.yk',
-        hashed_password=bcrypt.generate_password_hash('pavochkin.yk123').decode('utf-8'),
+        password=bcrypt.generate_password_hash('pavochkin.yk123').decode('utf-8'),
         role=role_student,
         group=group321
     )
@@ -63,7 +64,7 @@ def create_users():
         name='Юлия',
         patronymic='Олеговна',
         login='urazbakhtina.yo',
-        hashed_password=bcrypt.generate_password_hash('urazbakhtina.yo123').decode('utf-8'),
+        password=bcrypt.generate_password_hash('urazbakhtina.yo123').decode('utf-8'),
         role=role_deans_office
     )
     tutor = User(
@@ -72,7 +73,7 @@ def create_users():
         name='Руслан',
         patronymic='Римович',
         login='zhdanov.rr',
-        hashed_password=bcrypt.generate_password_hash('zhdanov.rr123').decode('utf-8'),
+        password=bcrypt.generate_password_hash('zhdanov.rr123').decode('utf-8'),
         role=role_tutor
     )
     db.session.add_all([
@@ -87,7 +88,11 @@ def create_users():
             'student_very_bad': student_very_bad
         },
         tutor: tutor,
-        deans_office: deans_office
+        deans_office: deans_office,
+        'groups': {
+            'group424': group424,
+            'group321': group321
+        }
     }
 
 
@@ -101,7 +106,7 @@ def create_subjects():
         id=create_id(),
         name='Многосвязные линии передач',
         count_hours=6
-    ),
+    )
     subject_telecommunication = Subject(
         id=create_id(),
         name='Системы сети и устройства телекоммуникации',
@@ -109,9 +114,9 @@ def create_subjects():
     )
     db.session.add_all([subject_comp_network, subject_line_transmission, subject_telecommunication])
     return {
-        subject_comp_network,
-        subject_line_transmission,
-        subject_telecommunication
+        'subject_comp_network': subject_comp_network,
+        'subject_line_transmission': subject_line_transmission,
+        'subject_telecommunication': subject_telecommunication
     }
 
 
@@ -119,36 +124,257 @@ def create_labs(subjects):
     lab_comp_network = Lab(
         id=create_id(),
         name='макет компьют. сети',
-        subject=subjects.subject_comp_network,
-        datetime=datetime.datetime(2021, 9, 20, 23, 59, 59),
+        subject=subjects['subject_comp_network'],
+        datetime=datetime.datetime(2021, 9, 20, 0, 0, 0),
         deadline=datetime.datetime(2021, 9, 27, 23, 59, 59)
     )
     lab_line_transmission = Lab(
         id=create_id(),
         name='макет многосвязной линии передач',
-        subject=subjects.subject_1,
-        datetime=datetime.datetime(2021, 9, 23, 23, 59, 59),
+        subject=subjects['subject_line_transmission'],
+        datetime=datetime.datetime(2021, 9, 23, 0, 0, 0),
         deadline=datetime.datetime(2021, 9, 30, 23, 59, 59)
     )
     lab_telecommunication = Lab(
         id=create_id(),
         name='Создание системы сети и устройства телекоммуникации',
-        subject=subjects.subject_1,
-        datetime=datetime.datetime(2021, 9, 21, 23, 59, 59),
+        subject=subjects['subject_telecommunication'],
+        datetime=datetime.datetime(2021, 9, 21, 0, 0, 0),
         deadline=datetime.datetime(2021, 9, 28, 23, 59, 59)
     )
     db.session.add_all([lab_comp_network, lab_line_transmission, lab_telecommunication])
     return {
-        lab_comp_network,
-        lab_line_transmission,
-        lab_telecommunication
+        'lab_comp_network': lab_comp_network,
+        'lab_line_transmission': lab_line_transmission,
+        'lab_telecommunication': lab_telecommunication
     }
 
 
-def create_attendance():
+def create_attendance(subjects, groups):
     lecture = AttendanceType(id=create_id(), name='Лекция')
     practice = AttendanceType(id=create_id(), name='Практика')
+    attendance_424 = {
+        'comp_network': [
+            Attendance(id=create_id(),
+                       subject=subjects['subject_comp_network'],
+                       group=groups['group424'],
+                       type=lecture,
+                       date=datetime.datetime(2021, 9, 3, 0, 0, 0),
+                       ),
+            Attendance(id=create_id(),
+                       subject=subjects['subject_comp_network'],
+                       group=groups['group424'],
+                       type=lecture,
+                       date=datetime.datetime(2021, 9, 10, 0, 0, 0),
+                       ),
+            Attendance(id=create_id(),
+                       subject=subjects['subject_comp_network'],
+                       group=groups['group424'],
+                       type=lecture,
+                       date=datetime.datetime(2021, 9, 14, 0, 0, 0),
+                       ),
+            Attendance(id=create_id(),
+                       subject=subjects['subject_comp_network'],
+                       group=groups['group424'],
+                       type=practice,
+                       date=datetime.datetime(2021, 9, 16, 0, 0, 0),
+                       ),
+            Attendance(id=create_id(),
+                       subject=subjects['subject_comp_network'],
+                       group=groups['group424'],
+                       type=lecture,
+                       date=datetime.datetime(2021, 9, 23, 0, 0, 0),
+                       ),
+            Attendance(id=create_id(),
+                       subject=subjects['subject_comp_network'],
+                       group=groups['group424'],
+                       type=lecture,
+                       date=datetime.datetime(2021, 9, 30, 0, 0, 0),
+                       )
+        ],
+        'line_transmission': [
+            Attendance(id=create_id(),
+                       subject=subjects['subject_line_transmission'],
+                       group=groups['group424'],
+                       type=lecture,
+                       date=datetime.datetime(2021, 9, 1, 0, 0, 0),
+                       ),
+            Attendance(id=create_id(),
+                       subject=subjects['subject_line_transmission'],
+                       group=groups['group424'],
+                       type=lecture,
+                       date=datetime.datetime(2021, 9, 8, 0, 0, 0),
+                       ),
+            Attendance(id=create_id(),
+                       subject=subjects['subject_line_transmission'],
+                       group=groups['group424'],
+                       type=lecture,
+                       date=datetime.datetime(2021, 9, 15, 0, 0, 0),
+                       ),
+            Attendance(id=create_id(),
+                       subject=subjects['subject_line_transmission'],
+                       group=groups['group424'],
+                       type=practice,
+                       date=datetime.datetime(2021, 9, 13, 0, 0, 0),
+                       ),
+            Attendance(id=create_id(),
+                       subject=subjects['subject_line_transmission'],
+                       group=groups['group424'],
+                       type=lecture,
+                       date=datetime.datetime(2021, 9, 20, 0, 0, 0),
+                       ),
+            Attendance(id=create_id(),
+                       subject=subjects['subject_line_transmission'],
+                       group=groups['group424'],
+                       type=lecture,
+                       date=datetime.datetime(2021, 9, 27, 0, 0, 0),
+                       )
+        ]
+    }
+    attendance_321 = {
+        'comp_network': [
+            Attendance(id=create_id(),
+                       subject=subjects['subject_comp_network'],
+                       group=groups['group321'],
+                       type=lecture,
+                       date=datetime.datetime(2021, 9, 2, 0, 0, 0),
+                       ),
+            Attendance(id=create_id(),
+                       subject=subjects['subject_comp_network'],
+                       group=groups['group321'],
+                       type=lecture,
+                       date=datetime.datetime(2021, 9, 19, 0, 0, 0),
+                       ),
+            Attendance(id=create_id(),
+                       subject=subjects['subject_comp_network'],
+                       group=groups['group321'],
+                       type=lecture,
+                       date=datetime.datetime(2021, 9, 16, 0, 0, 0),
+                       ),
+            Attendance(id=create_id(),
+                       subject=subjects['subject_comp_network'],
+                       group=groups['group321'],
+                       type=practice,
+                       date=datetime.datetime(2021, 9, 14, 0, 0, 0),
+                       ),
+            Attendance(id=create_id(),
+                       subject=subjects['subject_comp_network'],
+                       group=groups['group321'],
+                       type=lecture,
+                       date=datetime.datetime(2021, 9, 21, 0, 0, 0),
+                       ),
+            Attendance(id=create_id(),
+                       subject=subjects['subject_comp_network'],
+                       group=groups['group321'],
+                       type=lecture,
+                       date=datetime.datetime(2021, 9, 29, 0, 0, 0),
+                       )
+        ],
+        'telecommunication': [
+            Attendance(id=create_id(),
+                       subject=subjects['subject_telecommunication'],
+                       group=groups['group321'],
+                       type=lecture,
+                       date=datetime.datetime(2021, 9, 4, 0, 0, 0),
+                       ),
+            Attendance(id=create_id(),
+                       subject=subjects['subject_telecommunication'],
+                       group=groups['group321'],
+                       type=lecture,
+                       date=datetime.datetime(2021, 9, 11, 0, 0, 0),
+                       ),
+            Attendance(id=create_id(),
+                       subject=subjects['subject_telecommunication'],
+                       group=groups['group321'],
+                       type=lecture,
+                       date=datetime.datetime(2021, 9, 18, 0, 0, 0),
+                       ),
+            Attendance(id=create_id(),
+                       subject=subjects['subject_telecommunication'],
+                       group=groups['group321'],
+                       type=practice,
+                       date=datetime.datetime(2021, 9, 15, 0, 0, 0),
+                       ),
+            Attendance(id=create_id(),
+                       subject=subjects['subject_telecommunication'],
+                       group=groups['group321'],
+                       type=lecture,
+                       date=datetime.datetime(2021, 9, 22, 0, 0, 0),
+                       ),
+            Attendance(id=create_id(),
+                       subject=subjects['subject_telecommunication'],
+                       group=groups['group321'],
+                       type=lecture,
+                       date=datetime.datetime(2021, 9, 29, 0, 0, 0),
+                       )
+        ]
+    }
     db.session.add_all([lecture, practice])
+    db.session.add_all(attendance_424['comp_network'])
+    db.session.add_all(attendance_424['line_transmission'])
+    db.session.add_all(attendance_321['comp_network'])
+    db.session.add_all(attendance_321['telecommunication'])
+    return {
+        '424': attendance_424,
+        '321': attendance_321
+    }
+
+
+def create_activity():
+    activity_type_culture = ActivityType(id=create_id(), name="Культурная деятельность")
+    activity_type_science = ActivityType(id=create_id(), name="Научная деятельность")
+    activity_type_society = ActivityType(id=create_id(), name="Общественная деятельность")
+    activity_type_sport = ActivityType(id=create_id(), name="Спортивная деятельность")
+    activity_sub_type_local = ActivitySubType(id=create_id(), name="Республиканский")
+    activity_sub_type_country = ActivitySubType(id=create_id(), name="Всероссийский")
+    activity_sub_type_world = ActivitySubType(id=create_id(), name="Международный")
+
+    rate_culture_local = RateActivity(id=create_id(),
+                                      type=activity_type_culture,
+                                      sub_type=activity_sub_type_local,
+                                      value=1
+                                      )
+    rate_culture_country = RateActivity(id=create_id(),
+                                        type=activity_type_culture,
+                                        sub_type=activity_sub_type_country,
+                                        value=2
+                                        )
+    rate_culture_world = RateActivity(id=create_id(),
+                                      type=activity_type_culture,
+                                      sub_type=activity_sub_type_world,
+                                      value=2
+                                      )
+    rate_science = RateActivity(id=create_id(),
+                                type=activity_type_science,
+                                value=2
+                                )
+    rate_society = RateActivity(id=create_id(),
+                                type=activity_type_society,
+                                value=1
+                                )
+    rate_sport_local = RateActivity(id=create_id(),
+                                    type=activity_type_sport,
+                                    sub_type=activity_sub_type_local,
+                                    value=1
+                                    )
+    rate_sport_country = RateActivity(id=create_id(),
+                                      type=activity_type_sport,
+                                      sub_type=activity_sub_type_country,
+                                      value=2
+                                      )
+    rate_sport_world = RateActivity(id=create_id(),
+                                    type=activity_type_sport,
+                                    sub_type=activity_sub_type_world,
+                                    value=2
+                                    )
+
+    db.session.add_all(
+        [rate_culture_local, rate_culture_country, rate_culture_world, rate_science, rate_society, rate_sport_local,
+         rate_sport_country, rate_sport_world])
+    return {
+        rate_culture_local, rate_culture_country, rate_culture_world, rate_science, rate_society, rate_sport_local,
+        rate_sport_country, rate_sport_world
+    }
 
 
 def adding_data():
@@ -158,6 +384,8 @@ def adding_data():
         users = create_users()
         subjects = create_subjects()
         labs = create_labs(subjects)
+        attendance = create_attendance(subjects, users['groups'])
+        activity = create_activity()
         db.session.commit()
 
 

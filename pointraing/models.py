@@ -48,6 +48,7 @@ class Subject(db.Model):
     name = db.Column(db.String(120), nullable=False)
     count_hours = db.Column(db.Integer, nullable=False)
     labs = db.relationship('Lab', backref='subject', lazy=True)
+    attendance = db.relationship('Attendance', backref='subject', lazy=True)
 
     def __repr__(self):
         return "Subject('{self.name}')"
@@ -76,7 +77,11 @@ class Attendance(db.Model):
     id = db.Column(db.String(32), primary_key=True)
     subject_id = db.Column(db.String(32), db.ForeignKey('subject.id'), nullable=False)
     group_id = db.Column(db.String(32), db.ForeignKey('group.id'), nullable=False)
+    group = db.relationship('Group',
+                               backref=db.backref('attendance', lazy=True))
     type_id = db.Column(db.String(32), db.ForeignKey('attendance_type.id'), nullable=False)
+    type = db.relationship('AttendanceType',
+                            backref=db.backref('attendance', lazy=True))
     date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     def __repr__(self):
@@ -149,7 +154,11 @@ class ActivitySubType(db.Model):
 class RateActivity(db.Model):
     id = db.Column(db.String(32), primary_key=True)
     activity_type_id = db.Column(db.String(32), db.ForeignKey('activity_type.id'), nullable=False)
-    activity_sub_type_id = db.Column(db.String(32), db.ForeignKey('activity_sub_type.id'), nullable=False)
+    type = db.relationship('ActivityType',
+                           backref=db.backref('rate', lazy=True))
+    activity_sub_type_id = db.Column(db.String(32), db.ForeignKey('activity_sub_type.id'), nullable=True)
+    sub_type = db.relationship('ActivitySubType',
+                           backref=db.backref('rate', lazy=True))
     value = db.Column(db.Integer, default=0)
 
     def __repr__(self):
