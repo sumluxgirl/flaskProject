@@ -1,13 +1,6 @@
 from pointraing import db
 from datetime import datetime
 
-labs_grade = db.Table('labs_grade',
-                      db.Column('lab_id', db.String, db.ForeignKey('lab.id'), primary_key=True),
-                      db.Column('user_id', db.String, db.ForeignKey('user.id'), primary_key=True),
-                      db.Column('student_id', db.String, db.ForeignKey('user.id'), primary_key=True),
-                      db.Column('date', db.DateTime, nullable=False, default=datetime.utcnow)
-                      )
-
 
 class Role(db.Model):
     id = db.Column(db.String(32), primary_key=True)
@@ -27,6 +20,7 @@ class User(db.Model):
     role_id = db.Column(db.String, db.ForeignKey('role.id'), nullable=False)
     role = db.relationship('Role', backref=db.backref('users', lazy=True))
     group_id = db.Column(db.String, db.ForeignKey('group.id'), nullable=True)
+
     # labs = db.relationship('Labs', secondary=labs_grade, lazy='subquery',
     #                        backref=db.backref('users', lazy=True))
 
@@ -65,6 +59,21 @@ class Lab(db.Model):
         return "Lab('{self.name}')"
 
 
+class LabsGrade(db.Model):
+    id = db.Column(db.String(32), primary_key=True)
+    lab_id = db.Column(db.String(32), db.ForeignKey('lab.id'), nullable=False)
+    lab = db.relationship('Lab',
+                          backref=db.backref('labs_grade', lazy=True))
+    user_id = db.Column(db.String(32), db.ForeignKey('user.id'), nullable=False)
+    student_id = db.Column(db.String(32), db.ForeignKey('user.id'), nullable=False)
+    student = db.relationship('User',
+                              backref=db.backref('labs_grade', lazy=True))
+    date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    def __repr__(self):
+        return "Lab('{self.lab_id}', '{self.student_id}')"
+
+
 class AttendanceType(db.Model):
     id = db.Column(db.String(32), primary_key=True)
     name = db.Column(db.String(60), nullable=False)
@@ -78,10 +87,10 @@ class Attendance(db.Model):
     subject_id = db.Column(db.String(32), db.ForeignKey('subject.id'), nullable=False)
     group_id = db.Column(db.String(32), db.ForeignKey('group.id'), nullable=False)
     group = db.relationship('Group',
-                               backref=db.backref('attendance', lazy=True))
+                            backref=db.backref('attendance', lazy=True))
     type_id = db.Column(db.String(32), db.ForeignKey('attendance_type.id'), nullable=False)
     type = db.relationship('AttendanceType',
-                            backref=db.backref('attendance', lazy=True))
+                           backref=db.backref('attendance', lazy=True))
     date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     def __repr__(self):
@@ -91,7 +100,14 @@ class Attendance(db.Model):
 class AttendanceGrade(db.Model):
     id = db.Column(db.String(32), primary_key=True)
     user_id = db.Column(db.String(32), db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User',
+                           backref=db.backref('attendance_grade', lazy=True))
     student_id = db.Column(db.String(32), db.ForeignKey('user.id'), nullable=False)
+    student = db.relationship('User',
+                              backref=db.backref('attendance_grade', lazy=True))
+    attendance_id = db.Column(db.String(32), db.ForeignKey('attendance.id'), nullable=False)
+    attendance = db.relationship('Attendance',
+                                 backref=db.backref('attendance_grade', lazy=True))
     active = db.Column(db.Integer, default=0)
 
     def __repr__(self):
@@ -158,7 +174,7 @@ class RateActivity(db.Model):
                            backref=db.backref('rate', lazy=True))
     activity_sub_type_id = db.Column(db.String(32), db.ForeignKey('activity_sub_type.id'), nullable=True)
     sub_type = db.relationship('ActivitySubType',
-                           backref=db.backref('rate', lazy=True))
+                               backref=db.backref('rate', lazy=True))
     value = db.Column(db.Integer, default=0)
 
     def __repr__(self):

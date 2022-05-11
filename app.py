@@ -1,6 +1,6 @@
 from pointraing import app, db, bcrypt
 from pointraing.models import Role, User, Group, Subject, Lab, AttendanceType, Attendance, ActivityType, \
-    ActivitySubType, RateActivity
+    ActivitySubType, RateActivity, AttendanceGrade, LabsGrade
 import datetime
 import uuid
 
@@ -87,8 +87,8 @@ def create_users():
             'student_bad': student_bad,
             'student_very_bad': student_very_bad
         },
-        tutor: tutor,
-        deans_office: deans_office,
+        'tutor': tutor,
+        'deans_office': deans_office,
         'groups': {
             'group424': group424,
             'group321': group321
@@ -182,13 +182,13 @@ def create_attendance(subjects, groups):
             Attendance(id=create_id(),
                        subject=subjects['subject_comp_network'],
                        group=groups['group424'],
-                       type=lecture,
+                       type=practice,
                        date=datetime.datetime(2021, 9, 23, 0, 0, 0),
                        ),
             Attendance(id=create_id(),
                        subject=subjects['subject_comp_network'],
                        group=groups['group424'],
-                       type=lecture,
+                       type=practice,
                        date=datetime.datetime(2021, 9, 30, 0, 0, 0),
                        )
         ],
@@ -220,13 +220,13 @@ def create_attendance(subjects, groups):
             Attendance(id=create_id(),
                        subject=subjects['subject_line_transmission'],
                        group=groups['group424'],
-                       type=lecture,
+                       type=practice,
                        date=datetime.datetime(2021, 9, 20, 0, 0, 0),
                        ),
             Attendance(id=create_id(),
                        subject=subjects['subject_line_transmission'],
                        group=groups['group424'],
-                       type=lecture,
+                       type=practice,
                        date=datetime.datetime(2021, 9, 27, 0, 0, 0),
                        )
         ]
@@ -260,13 +260,13 @@ def create_attendance(subjects, groups):
             Attendance(id=create_id(),
                        subject=subjects['subject_comp_network'],
                        group=groups['group321'],
-                       type=lecture,
+                       type=practice,
                        date=datetime.datetime(2021, 9, 21, 0, 0, 0),
                        ),
             Attendance(id=create_id(),
                        subject=subjects['subject_comp_network'],
                        group=groups['group321'],
-                       type=lecture,
+                       type=practice,
                        date=datetime.datetime(2021, 9, 29, 0, 0, 0),
                        )
         ],
@@ -298,13 +298,13 @@ def create_attendance(subjects, groups):
             Attendance(id=create_id(),
                        subject=subjects['subject_telecommunication'],
                        group=groups['group321'],
-                       type=lecture,
+                       type=practice,
                        date=datetime.datetime(2021, 9, 22, 0, 0, 0),
                        ),
             Attendance(id=create_id(),
                        subject=subjects['subject_telecommunication'],
                        group=groups['group321'],
-                       type=lecture,
+                       type=practice,
                        date=datetime.datetime(2021, 9, 29, 0, 0, 0),
                        )
         ]
@@ -377,6 +377,128 @@ def create_activity():
     }
 
 
+def create_rate_users(users, attendance, labs):
+    students = users['students']
+    tutor = users['tutor']
+
+    def add_attendance_424(attendance_item):
+        db.session.add(
+            AttendanceGrade(id=create_id(),
+                            user_id=tutor.id,
+                            student=students['student_best'],
+                            attendance=attendance_item
+                            )
+        )
+        if i.type.name == 'Практика':
+            db.session.add(
+                AttendanceGrade(id=create_id(),
+                                user_id=tutor.id,
+                                student=students['student_bad'],
+                                attendance=attendance_item
+                                )
+            )
+
+    for i in attendance['424']['comp_network']:
+        add_attendance_424(i)
+
+    for i in attendance['424']['line_transmission']:
+        add_attendance_424(i)
+
+    num = 0
+    for i in attendance['321']['comp_network']:
+        num = num + 1
+        if num == 3 or i.type.name == 'Практика':
+            db.session.add(
+                AttendanceGrade(id=create_id(),
+                                user_id=tutor.id,
+                                student=students['student_norm'],
+                                attendance=i
+                                )
+            )
+
+    num = 0
+    for i in attendance['321']['telecommunication']:
+        num = num + 1
+        if i.type.name == 'Практика':
+            if num == 1:
+                continue
+            elif num == 2:
+                db.session.add_all([
+                    AttendanceGrade(id=create_id(),
+                                    user_id=tutor.id,
+                                    student=students['student_very_bad'],
+                                    attendance=i
+                                    ),
+                    db.session.add(
+                        AttendanceGrade(id=create_id(),
+                                        user_id=tutor.id,
+                                        student=students['student_norm'],
+                                        attendance=i
+                                        )
+                    )
+                ])
+            else:
+                db.session.add(
+                    AttendanceGrade(id=create_id(),
+                                    user_id=tutor.id,
+                                    student=students['student_norm'],
+                                    attendance=i
+                                    )
+                )
+        else:
+            db.session.add(
+                AttendanceGrade(id=create_id(),
+                                user_id=tutor.id,
+                                student=students['student_norm'],
+                                attendance=i
+                                )
+            )
+
+    db.session.add_all([
+        LabsGrade(id=create_id(),
+                  lab=labs['lab_comp_network'],
+                  user_id=tutor.id,
+                  student=students['student_best'],
+                  date=datetime.datetime(2021, 9, 25, 0, 0, 0)
+                  ),
+        LabsGrade(id=create_id(),
+                  lab=labs['lab_line_transmission'],
+                  user_id=tutor.id,
+                  student=students['student_best'],
+                  date=datetime.datetime(2021, 9, 28, 0, 0, 0)
+                  ),
+        LabsGrade(id=create_id(),
+                  lab=labs['lab_comp_network'],
+                  user_id=tutor.id,
+                  student=students['student_bad'],
+                  date=datetime.datetime(2021, 9, 27, 0, 0, 0)
+                  ),
+        LabsGrade(id=create_id(),
+                  lab=labs['lab_line_transmission'],
+                  user_id=tutor.id,
+                  student=students['student_bad'],
+                  date=datetime.datetime(2021, 9, 30, 0, 0, 0)
+                  ),
+        LabsGrade(id=create_id(),
+                  lab=labs['lab_comp_network'],
+                  user_id=tutor.id,
+                  student=students['student_norm'],
+                  date=datetime.datetime(2021, 9, 27, 0, 0, 0)
+                  ),
+        LabsGrade(id=create_id(),
+                  lab=labs['lab_telecommunication'],
+                  user_id=tutor.id,
+                  student=students['student_norm'],
+                  date=datetime.datetime(2021, 10, 4, 0, 0, 0)
+                  ),
+        LabsGrade(id=create_id(),
+                  lab=labs['lab_comp_network'],
+                  user_id=tutor.id,
+                  student=students['student_very_bad'],
+                  date=datetime.datetime(2021, 9, 30, 0, 0, 0)
+                  )
+    ])
+
 def adding_data():
     db.drop_all()
     with app.app_context():
@@ -386,6 +508,7 @@ def adding_data():
         labs = create_labs(subjects)
         attendance = create_attendance(subjects, users['groups'])
         activity = create_activity()
+        create_rate_users(users, attendance, labs)
         db.session.commit()
 
 
