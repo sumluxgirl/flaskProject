@@ -65,13 +65,12 @@ class LabsGrade(db.Model):
     lab = db.relationship('Lab',
                           backref=db.backref('labs_grade', lazy=True))
     user_id = db.Column(db.String(32), db.ForeignKey('user.id'), nullable=False)
-    student_id = db.Column(db.String(32), db.ForeignKey('user.id'), nullable=False)
-    student = db.relationship('User',
+    user = db.relationship('User',
                               backref=db.backref('labs_grade', lazy=True))
     date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     def __repr__(self):
-        return "Lab('{self.lab_id}', '{self.student_id}')"
+        return "Lab('{self.lab_id}', '{self.user_id}')"
 
 
 class AttendanceType(db.Model):
@@ -94,7 +93,7 @@ class Attendance(db.Model):
     date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     def __repr__(self):
-        return "Attendance('{self.student_id}', '{self.active}')"
+        return "Attendance('{self.subject_id}', '{self.type_id}')"
 
 
 class AttendanceGrade(db.Model):
@@ -102,16 +101,13 @@ class AttendanceGrade(db.Model):
     user_id = db.Column(db.String(32), db.ForeignKey('user.id'), nullable=False)
     user = db.relationship('User',
                            backref=db.backref('attendance_grade', lazy=True))
-    student_id = db.Column(db.String(32), db.ForeignKey('user.id'), nullable=False)
-    student = db.relationship('User',
-                              backref=db.backref('attendance_grade', lazy=True))
     attendance_id = db.Column(db.String(32), db.ForeignKey('attendance.id'), nullable=False)
     attendance = db.relationship('Attendance',
                                  backref=db.backref('attendance_grade', lazy=True))
     active = db.Column(db.Integer, default=0)
 
     def __repr__(self):
-        return "AttendanceGrade('{self.student_id}', '{self.active}')"
+        return "AttendanceGrade('{self.user_id}', '{self.active}')"
 
 
 class TypeGrade(db.Model):
@@ -126,21 +122,19 @@ class Grade(db.Model):
     id = db.Column(db.String(32), primary_key=True)
     name = db.Column(db.String(60), nullable=False)
     user_id = db.Column(db.String(32), db.ForeignKey('user.id'), nullable=False)
-    student_id = db.Column(db.String(32), db.ForeignKey('user.id'), nullable=False)
     subject_id = db.Column(db.String(32), db.ForeignKey('subject.id'), nullable=False)
     value = db.Column(db.Integer, default=0)
     date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     type_id = db.Column(db.String(32), db.ForeignKey('type_grade.id'), nullable=False)
 
     def __repr__(self):
-        return "Grade('{self.name}', '{self.student_id}', '{self.value}')"
+        return "Grade('{self.name}', '{self.user_id}', '{self.value}')"
 
 
 class Activity(db.Model):
     id = db.Column(db.String(32), primary_key=True)
     name = db.Column(db.String(60), nullable=False)
     user_id = db.Column(db.String(32), db.ForeignKey('user.id'), nullable=False)
-    student_id = db.Column(db.String(32), db.ForeignKey('user.id'), nullable=False)
     file = db.Column(db.String(20), nullable=False)
     status = db.Column(db.Boolean, nullable=True)
     comment = db.Column(db.String(240), nullable=True)

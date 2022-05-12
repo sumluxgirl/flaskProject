@@ -384,16 +384,14 @@ def create_rate_users(users, attendance, labs):
     def add_attendance_424(attendance_item):
         db.session.add(
             AttendanceGrade(id=create_id(),
-                            user_id=tutor.id,
-                            student=students['student_best'],
+                            user=students['student_best'],
                             attendance=attendance_item
                             )
         )
         if i.type.name == 'Практика':
             db.session.add(
                 AttendanceGrade(id=create_id(),
-                                user_id=tutor.id,
-                                student=students['student_bad'],
+                                user=students['student_bad'],
                                 attendance=attendance_item
                                 )
             )
@@ -410,8 +408,7 @@ def create_rate_users(users, attendance, labs):
         if num == 3 or i.type.name == 'Практика':
             db.session.add(
                 AttendanceGrade(id=create_id(),
-                                user_id=tutor.id,
-                                student=students['student_norm'],
+                                user=students['student_norm'],
                                 attendance=i
                                 )
             )
@@ -425,14 +422,12 @@ def create_rate_users(users, attendance, labs):
             elif num == 2:
                 db.session.add_all([
                     AttendanceGrade(id=create_id(),
-                                    user_id=tutor.id,
-                                    student=students['student_very_bad'],
+                                    user=students['student_very_bad'],
                                     attendance=i
                                     ),
                     db.session.add(
                         AttendanceGrade(id=create_id(),
-                                        user_id=tutor.id,
-                                        student=students['student_norm'],
+                                        user=students['student_norm'],
                                         attendance=i
                                         )
                     )
@@ -440,16 +435,14 @@ def create_rate_users(users, attendance, labs):
             else:
                 db.session.add(
                     AttendanceGrade(id=create_id(),
-                                    user_id=tutor.id,
-                                    student=students['student_norm'],
+                                    user=students['student_norm'],
                                     attendance=i
                                     )
                 )
         else:
             db.session.add(
                 AttendanceGrade(id=create_id(),
-                                user_id=tutor.id,
-                                student=students['student_norm'],
+                                user=students['student_norm'],
                                 attendance=i
                                 )
             )
@@ -457,44 +450,37 @@ def create_rate_users(users, attendance, labs):
     db.session.add_all([
         LabsGrade(id=create_id(),
                   lab=labs['lab_comp_network'],
-                  user_id=tutor.id,
-                  student=students['student_best'],
+                  user=students['student_best'],
                   date=datetime.datetime(2021, 9, 25, 0, 0, 0)
                   ),
         LabsGrade(id=create_id(),
                   lab=labs['lab_line_transmission'],
-                  user_id=tutor.id,
-                  student=students['student_best'],
+                  user=students['student_best'],
                   date=datetime.datetime(2021, 9, 28, 0, 0, 0)
                   ),
         LabsGrade(id=create_id(),
                   lab=labs['lab_comp_network'],
-                  user_id=tutor.id,
-                  student=students['student_bad'],
+                  user=students['student_bad'],
                   date=datetime.datetime(2021, 9, 27, 0, 0, 0)
                   ),
         LabsGrade(id=create_id(),
                   lab=labs['lab_line_transmission'],
-                  user_id=tutor.id,
-                  student=students['student_bad'],
+                  user=students['student_bad'],
                   date=datetime.datetime(2021, 9, 30, 0, 0, 0)
                   ),
         LabsGrade(id=create_id(),
                   lab=labs['lab_comp_network'],
-                  user_id=tutor.id,
-                  student=students['student_norm'],
+                  user=students['student_norm'],
                   date=datetime.datetime(2021, 9, 27, 0, 0, 0)
                   ),
         LabsGrade(id=create_id(),
                   lab=labs['lab_telecommunication'],
-                  user_id=tutor.id,
-                  student=students['student_norm'],
+                  user=students['student_norm'],
                   date=datetime.datetime(2021, 10, 4, 0, 0, 0)
                   ),
         LabsGrade(id=create_id(),
                   lab=labs['lab_comp_network'],
-                  user_id=tutor.id,
-                  student=students['student_very_bad'],
+                  user=students['student_very_bad'],
                   date=datetime.datetime(2021, 9, 30, 0, 0, 0)
                   )
     ])
