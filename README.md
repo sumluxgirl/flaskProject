@@ -16,6 +16,8 @@ Point rating system USATU
     pip install Flask
     pip install -U Flask-SQLAlchemy
     pip install flask-bcrypt
+    pip install flask-login
+    pip install -U Flask-WTF
 ```
 ##quick start
 ```
