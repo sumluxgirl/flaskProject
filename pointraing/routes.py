@@ -43,4 +43,9 @@ def logout():
 @app.route("/account")
 @login_required
 def account():
-    return render_template('account.html', title='Account')
+    user_name_tuple = (current_user.surname, current_user.name, current_user.patronymic)
+    full_name = ' '.join(user_name_tuple)
+    role = current_user.role.name
+    group = current_user.group
+    group_name = group.name if group else None
+    return render_template('account.html', title='Account', full_name=full_name, role=role, group_name=group_name)

@@ -1,16 +1,18 @@
 {% extends "layout.html" %}
 {% block content %}
-    <div class="card mb-3 m-2" style="max-width: 540px;">
+    <div class="card mb-3 m-2">
         <div class="row g-0">
-            <div class="col-md-4">
-                <i class="bi bi-person"></i>
+            <div class="col-md-4 text-center">
+                <i class="bi bi-person" style="font-size: 7.25rem"></i>
             </div>
             <div class="col-md-8">
                 <div class="card-body">
-                    <h5 class="card-title">{{ current_user.name }}</h5>
-                    <p class="card-text">This is a wider card with supporting text below as a natural lead-in to
-                        additional content. This content is a little bit longer.</p>
-                    <p class="card-text"><small class="text-muted">Last updated 3 mins ago</small></p>
+                    <h5 class="card-title">{{ full_name }}</h5>
+                    <p class="card-text">Роль: {{ role }}</p>
+                    {% if group_name %}
+                        <p class="card-text">Группа: {{ group_name }}</p>
+                    {% endif %}
+                    <a class="text-muted" href="{{ url_for('account') }}">Сменить пароль?</a>
                 </div>
             </div>
         </div>
