@@ -1,6 +1,8 @@
-from pointraing import db, login_manager
+from pointraing import db, login_manager, app
+from jwt import encode as encode_jwt, decode as decode_jwt, ExpiredSignatureError, InvalidTokenError
 from flask_login import UserMixin
 from datetime import datetime
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -28,6 +30,35 @@ class User(db.Model, UserMixin):
 
     # labs = db.relationship('Labs', secondary=labs_grade, lazy='subquery',
     #                        backref=db.backref('users', lazy=True))
+
+    def get_reset_token(self, expires_sec=1800):
+        """
+           Generates the Auth Token
+           :return: string
+           """
+        try:
+            payload = {
+                'exp': expires_sec,
+                'iat': datetime.datetime.utcnow(),
+                'sub': self.id
+            }
+            return encode_jwt(
+                payload,
+                app.config.get('SECRET_KEY'),
+                algorithm='HS256'
+            )
+        except Exception:
+            return None
+
+    @staticmethod
+    def verify_reset_token(token):
+        try:
+            user_id = decode_jwt(token, app.config.get('SECRET_KEY'))['sub']
+            return User.query.get(user_id)
+        except ExpiredSignatureError:
+            return 'Signature expired. Please log in again.'
+        except InvalidTokenError:
+            return 'Invalid token. Please log in again'
 
     def __repr__(self):
         return "User('{self.name}', 'self.login')"
@@ -71,7 +102,7 @@ class LabsGrade(db.Model):
                           backref=db.backref('labs_grade', lazy=True))
     user_id = db.Column(db.String(32), db.ForeignKey('user.id'), nullable=False)
     user = db.relationship('User',
-                              backref=db.backref('labs_grade', lazy=True))
+                           backref=db.backref('labs_grade', lazy=True))
     date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     def __repr__(self):

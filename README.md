@@ -18,6 +18,7 @@ Point rating system USATU
     pip install flask-bcrypt
     pip install flask-login
     pip install -U Flask-WTF
+    pip install pyjwt
     cd pointrating/static
     npm i bootstrap-icon
 ```
