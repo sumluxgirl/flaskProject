@@ -10,7 +10,19 @@ from pointraing.models import User
 def home():
     if not current_user.is_authenticated:
         return redirect(url_for('login'))
+    if current_user.role.name == 'Студент':
+        return redirect(url_for('student_education'))
     return render_template('home.html')
+
+
+@app.route("/student/education")
+def student_education():
+    return render_template('student.html', active_tab='education')
+
+
+@app.route("/student/activity")
+def student_activity():
+    return render_template('student.html', active_tab='activity')
 
 
 @app.route("/about")

@@ -1,0 +1,15 @@
+{% macro naveItem(name, url, is_active) -%}
+    <a class="nav-link {{ 'active' if is_active }}"
+            {% if is_active %}
+       aria-current="page"
+            {% endif %}
+       href="{{ url }}">{{ name }}</a>
+{%- endmacro %}
+
+{% extends "layout.html" %}
+{% block content %}
+    <ul class="nav nav-tabs pt-2">
+        {{ naveItem('Учебная деятельность', url_for('student_education'), active_tab == 'education') }}
+        {{ naveItem('Активность', url_for('student_activity'), active_tab == 'activity') }}
+    </ul>
+{% endblock content %}

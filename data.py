@@ -11,7 +11,7 @@ def create_id():
 
 def create_users():
     role_student = Role(id=create_id(), name='Студент')
-    role_tutor = Role(id=create_id(), name='Преподавательь')
+    role_tutor = Role(id=create_id(), name='Преподаватель')
     role_deans_office = Role(id=create_id(), name='Деканат')
     group424 = Group(id=create_id(), name='ИКТ-424')
     group321 = Group(id=create_id(), name='ИКТ-321')
