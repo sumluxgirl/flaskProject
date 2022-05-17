@@ -2,7 +2,7 @@ from pointraing import app, bcrypt, db
 from flask import render_template, url_for, redirect, request, flash
 from flask_login import login_user, current_user, logout_user, login_required
 from pointraing.forms import LoginForm, ResetPasswordForm
-from pointraing.models import User, Subject, Attendance
+from pointraing.models import User, Attendance, Lab, LabsGrade, Grade, Subject, AttendanceGrade
 
 
 @app.route("/")
@@ -25,7 +25,35 @@ def student_education(subject_id=None):
     for i in attendance_subjects:
         subjects.append(i.subject)
 
-    return render_template('student.html', active_tab='education', right_group=subjects, group_id=subject_id)
+    if not subject_id:
+        return render_template('education.html',
+                               active_tab='education',
+                               right_group=subjects,
+                               group_id=subject_id
+                               )
+    else:
+        current_subject = Subject.query.filter_by(id=subject_id).first()
+        attendance = Attendance.query \
+            .filter_by(subject_id=subject_id) \
+            .order_by(Attendance.date).all()
+        attendance_user = AttendanceGrade.query \
+            .filter_by(user_id=current_user.id).all()
+        labs = Lab.query.filter_by(subject_id=subject_id).all()
+        labs_grade = LabsGrade.query.filter_by(user_id=current_user.id).all()
+        grade = Grade.query.filter_by(user_id=current_user.id)\
+            .filter_by(subject_id=subject_id).order_by(Grade.date).all()
+        return render_template('education.html',
+                               active_tab='education',
+                               right_group=subjects,
+                               group_id=subject_id,
+                               count_hours=current_subject.count_hours,
+                               attendance_len=len(attendance_user),
+                               attendance=attendance,
+                               attendance_user=attendance_user,
+                               labs=labs,
+                               labs_grade=labs_grade,
+                               grade=grade
+                               )
 
 
 @app.route("/student/activity")
