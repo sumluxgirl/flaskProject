@@ -12,4 +12,30 @@
         {{ naveItem('Учебная деятельность', url_for('student_education'), active_tab == 'education') }}
         {{ naveItem('Активность', url_for('student_activity'), active_tab == 'activity') }}
     </ul>
+    <div>
+        <div class="row">
+            <div class="col-4">
+                <div class="list-group list-group-flush">
+                    {% for item in right_group %}
+                        <a
+                                {% if active_tab == 'education' %}
+                                    href="{{ url_for('student_education', subject_id=item.id) }}"
+                                {% else %}
+                                    href="{{ url_for('student_activity', subject_id=item.id) }}"
+                                {% endif %}
+                                    class="list-group-item list-group-item-action {{ 'active' if group_id == item.id }}"
+                                {% if group_id == item.id %}
+                                    aria-current="page"
+                                {% endif %}
+                        >
+                            {{ item.name }}
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="col-8">
+                {% block right %}{% endblock %}
+            </div>
+        </div>
+    </div>
 {% endblock content %}

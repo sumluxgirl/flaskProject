@@ -2,7 +2,7 @@ from pointraing import app, bcrypt, db
 from flask import render_template, url_for, redirect, request, flash
 from flask_login import login_user, current_user, logout_user, login_required
 from pointraing.forms import LoginForm, ResetPasswordForm
-from pointraing.models import User
+from pointraing.models import User, Subject, Attendance
 
 
 @app.route("/")
@@ -16,8 +16,16 @@ def home():
 
 
 @app.route("/student/education")
-def student_education():
-    return render_template('student.html', active_tab='education')
+@app.route("/student/education/<string:subject_id>")
+@login_required
+def student_education(subject_id=None):
+    group = current_user.group
+    attendance_subjects = Attendance.query.filter_by(group_id=group.id).group_by(Attendance.subject_id).all()
+    subjects = []
+    for i in attendance_subjects:
+        subjects.append(i.subject)
+
+    return render_template('student.html', active_tab='education', right_group=subjects, group_id=subject_id)
 
 
 @app.route("/student/activity")
