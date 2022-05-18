@@ -34,10 +34,16 @@ def student_education(subject_id=None):
     else:
         current_subject = Subject.query.filter_by(id=subject_id).first()
         attendance = Attendance.query \
-            .filter_by(subject_id=subject_id) \
+            .join(AttendanceGrade, Attendance.attendance_grade) \
+            .add_entity(AttendanceGrade).from_self() \
+            .filter(Attendance.subject_id == subject_id) \
+            .filter(AttendanceGrade.user_id == current_user.id) \
             .order_by(Attendance.date).all()
-        attendance_user = AttendanceGrade.query \
-            .filter_by(user_id=current_user.id).all()
+        attendance_len = AttendanceGrade.query\
+            .join(AttendanceGrade.attendance) \
+            .filter(Attendance.subject_id == subject_id) \
+            .filter(AttendanceGrade.user_id == current_user.id)\
+            .count()
         labs = Lab.query.filter_by(subject_id=subject_id).all()
         labs_grade = LabsGrade.query.filter_by(user_id=current_user.id).all()
         grade = Grade.query.filter_by(user_id=current_user.id)\
@@ -47,9 +53,8 @@ def student_education(subject_id=None):
                                right_group=subjects,
                                group_id=subject_id,
                                count_hours=current_subject.count_hours,
-                               attendance_len=len(attendance_user),
+                               attendance_len=attendance_len,
                                attendance=attendance,
-                               attendance_user=attendance_user,
                                labs=labs,
                                labs_grade=labs_grade,
                                grade=grade
