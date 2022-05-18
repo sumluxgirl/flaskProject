@@ -39,13 +39,22 @@ def student_education(subject_id=None):
             .filter(Attendance.subject_id == subject_id) \
             .filter(AttendanceGrade.user_id == current_user.id) \
             .order_by(Attendance.date).all()
-        attendance_len = AttendanceGrade.query\
+        attendance_count_user = AttendanceGrade.query\
             .join(AttendanceGrade.attendance) \
             .filter(Attendance.subject_id == subject_id) \
             .filter(AttendanceGrade.user_id == current_user.id)\
             .count()
-        labs = Lab.query.filter_by(subject_id=subject_id).all()
-        labs_grade = LabsGrade.query.filter_by(user_id=current_user.id).all()
+        labs = Lab.query\
+            .join(LabsGrade, Lab.labs_grade) \
+            .add_entity(LabsGrade).from_self() \
+            .filter(Lab.subject_id == subject_id) \
+            .filter(LabsGrade.user_id == current_user.id) \
+            .all()
+        labs_count_user = LabsGrade.query \
+            .join(Lab, LabsGrade.lab) \
+            .filter(Lab.subject_id == subject_id) \
+            .filter(LabsGrade.user_id == current_user.id) \
+            .count()
         grade = Grade.query.filter_by(user_id=current_user.id)\
             .filter_by(subject_id=subject_id).order_by(Grade.date).all()
         return render_template('education.html',
@@ -53,10 +62,11 @@ def student_education(subject_id=None):
                                right_group=subjects,
                                group_id=subject_id,
                                count_hours=current_subject.count_hours,
-                               attendance_len=attendance_len,
+                               attendance_count_user=attendance_count_user,
                                attendance=attendance,
                                labs=labs,
-                               labs_grade=labs_grade,
+                               labs_count=len(labs),
+                               labs_count_user=labs_count_user,
                                grade=grade
                                )
 
