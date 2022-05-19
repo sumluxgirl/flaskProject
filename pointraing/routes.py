@@ -2,8 +2,8 @@ from pointraing import app, bcrypt, db
 from flask import render_template, url_for, redirect, request, flash
 from flask_login import login_user, current_user, logout_user, login_required
 from pointraing.forms import LoginForm, ResetPasswordForm
-from pointraing.models import User, Attendance, Lab, LabsGrade, Grade, Subject, AttendanceGrade
-from sqlalchemy.orm import subqueryload, selectinload
+from pointraing.models import User, Attendance, Lab, LabsGrade, Grade, AttendanceGrade, ActivityType, ActivitySubType, \
+    RateActivity, Activity
 
 
 @app.route("/")
@@ -14,7 +14,6 @@ def home():
     if current_user.role.name == 'Студент':
         return redirect(url_for('student_education'))
     return render_template('home.html')
-
 
 @app.route("/student/education")
 @app.route("/student/education/<string:subject_id>")
@@ -35,8 +34,7 @@ def student_education(subject_id=None):
                                group_id=subject_id
                                )
     else:
-        current_subject = Subject.query.filter_by(id=subject_id).first()
-        attendance_user = AttendanceGrade.query\
+        attendance_user = AttendanceGrade.query \
             .filter(AttendanceGrade.user_id == current_user.id).subquery()
         attendance = Attendance.query \
             .filter(Attendance.subject_id == subject_id) \
@@ -44,30 +42,31 @@ def student_education(subject_id=None):
             .add_columns(attendance_user.c.id, attendance_user.c.active) \
             .outerjoin(attendance_user, Attendance.id == attendance_user.c.attendance_id) \
             .order_by(Attendance.date).all()
-        attendance_count_user = AttendanceGrade.query\
+        attendance_count_user = AttendanceGrade.query \
             .join(AttendanceGrade.attendance) \
             .filter(Attendance.subject_id == subject_id) \
-            .filter(AttendanceGrade.user_id == current_user.id)\
+            .filter(AttendanceGrade.user_id == current_user.id) \
             .count()
-        labs_user_subq = LabsGrade.query\
+        labs_user_subq = LabsGrade.query \
             .filter(LabsGrade.user_id == current_user.id).subquery()
-        labs = Lab.query\
+        labs = Lab.query \
             .filter(Lab.subject_id == subject_id) \
             .add_columns(labs_user_subq.c.id, labs_user_subq.c.date) \
-            .outerjoin(labs_user_subq, Lab.id == labs_user_subq.c.lab_id)\
+            .outerjoin(labs_user_subq, Lab.id == labs_user_subq.c.lab_id) \
             .all()
         labs_count_user = LabsGrade.query \
             .join(Lab, LabsGrade.lab) \
             .filter(Lab.subject_id == subject_id) \
             .filter(LabsGrade.user_id == current_user.id) \
             .count()
-        grade = Grade.query.filter_by(user_id=current_user.id)\
+        grade = Grade.query \
+            .filter_by(user_id=current_user.id) \
             .filter_by(subject_id=subject_id).order_by(Grade.date).all()
         return render_template('education.html',
                                active_tab='education',
                                right_group=subjects,
                                group_id=subject_id,
-                               count_hours=current_subject.count_hours,
+                               count_hours=len(attendance),
                                attendance_count_user=attendance_count_user,
                                attendance=attendance,
                                labs=labs,
@@ -78,8 +77,22 @@ def student_education(subject_id=None):
 
 
 @app.route("/student/activity")
-def student_activity():
-    return render_template('student.html', active_tab='activity')
+@app.route("/student/activity/<string:activity_id>")
+def student_activity(activity_id=None):
+    activity = ActivityType.query.all()
+    if not activity_id and len(activity) > 0:
+        activity_id = activity[0].id
+
+    activity_by_user = Activity.query\
+        .filter(Activity.user_id == current_user.id)\
+        .filter(Activity.type_id == activity_id).all()
+    print(activity_by_user)
+    return render_template('activity.html',
+                           active_tab='activity',
+                           right_group=activity,
+                           group_id=activity_id,
+                           activity_by_user=activity_by_user
+                           )
 
 
 @app.route("/about")

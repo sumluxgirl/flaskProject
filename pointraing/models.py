@@ -179,6 +179,8 @@ class Activity(db.Model):
     comment = db.Column(db.String(240), nullable=True)
     type_id = db.Column(db.String(32), db.ForeignKey('activity_type.id'), nullable=False)
     rate_id = db.Column(db.String(32), db.ForeignKey('rate_activity.id'), nullable=False)
+    rate = db.relationship('RateActivity',
+                           backref=db.backref('activity', lazy=True))
 
     def __repr__(self):
         return "Activity('{self.name}', '{self.user_id}', '{self.file}')"
