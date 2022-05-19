@@ -3,6 +3,7 @@ from flask import render_template, url_for, redirect, request, flash
 from flask_login import login_user, current_user, logout_user, login_required
 from pointraing.forms import LoginForm, ResetPasswordForm
 from pointraing.models import User, Attendance, Lab, LabsGrade, Grade, Subject, AttendanceGrade
+from sqlalchemy.orm import subqueryload, selectinload
 
 
 @app.route("/")
@@ -33,22 +34,25 @@ def student_education(subject_id=None):
                                )
     else:
         current_subject = Subject.query.filter_by(id=subject_id).first()
+        attendance_user = AttendanceGrade.query\
+            .filter(AttendanceGrade.user_id == current_user.id).subquery()
         attendance = Attendance.query \
-            .join(AttendanceGrade, Attendance.attendance_grade) \
-            .add_entity(AttendanceGrade).from_self() \
             .filter(Attendance.subject_id == subject_id) \
-            .filter(AttendanceGrade.user_id == current_user.id) \
+            .filter(Attendance.group_id == current_user.group_id) \
+            .add_columns(attendance_user.c.id, attendance_user.c.active) \
+            .outerjoin(attendance_user, Attendance.id == attendance_user.c.attendance_id) \
             .order_by(Attendance.date).all()
         attendance_count_user = AttendanceGrade.query\
             .join(AttendanceGrade.attendance) \
             .filter(Attendance.subject_id == subject_id) \
             .filter(AttendanceGrade.user_id == current_user.id)\
             .count()
+        labs_user_subq = LabsGrade.query\
+            .filter(LabsGrade.user_id == current_user.id).subquery()
         labs = Lab.query\
-            .join(LabsGrade, Lab.labs_grade) \
-            .add_entity(LabsGrade).from_self() \
             .filter(Lab.subject_id == subject_id) \
-            .filter(LabsGrade.user_id == current_user.id) \
+            .add_columns(labs_user_subq.c.id, labs_user_subq.c.date) \
+            .outerjoin(labs_user_subq, Lab.id == labs_user_subq.c.lab_id)\
             .all()
         labs_count_user = LabsGrade.query \
             .join(Lab, LabsGrade.lab) \
