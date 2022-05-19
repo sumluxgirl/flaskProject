@@ -25,6 +25,8 @@ def student_education(subject_id=None):
     subjects = []
     for i in attendance_subjects:
         subjects.append(i.subject)
+    if not subject_id and len(subjects) > 0:
+        subject_id = subjects[0].id
 
     if not subject_id:
         return render_template('education.html',
