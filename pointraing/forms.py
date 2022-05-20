@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileAllowed, FileRequired
-from wtforms import StringField, PasswordField, SubmitField, BooleanField, SelectField, FileField
+from flask_wtf.file import FileAllowed, FileRequired, FileField
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, SelectField
 from wtforms.validators import DataRequired, EqualTo
 
 
@@ -22,5 +22,5 @@ class ResetPasswordForm(FlaskForm):
 class StudentActivityForm(FlaskForm):
     name = StringField('Название', validators=[DataRequired()])
     sub_type_id = SelectField('Тип')
-    file = FileField('Загрузите грамоту/сертификат', validators=[FileAllowed(['jpg', 'png', 'pdf'], FileRequired())])
+    file = FileField('Загрузите грамоту/сертификат', validators=[FileAllowed(['jpg', 'png', 'pdf']), FileRequired()])
     submit = SubmitField('Отправить')
