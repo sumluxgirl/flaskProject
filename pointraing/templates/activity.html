@@ -1,7 +1,10 @@
 {% extends "student.html" %}
 {% block right %}
-    {% if activity_by_user.length %}
-        <table class="table">
+    {% if activity_by_user %}
+        <a class="btn btn-primary mt-1" href="{{ url_for('student_activity_new', activity_id=group_id) }}" role="button">
+            Добавить
+        </a>
+        <table class="table align-middle">
             <thead>
             <tr>
                 <th scope="col">Название</th>
@@ -14,20 +17,21 @@
             </thead>
             <tbody>
             {% for item in activity_by_user %}
-                {% if item.status == None %}
+                {% if not item.status %}
                     <tr>
                         {% elif item.status == True %}
                     <tr class="table-success">
                         {% else %}
-                    <tr class="table-danger">
+                    <tr class="table-danger {{ item.status }}">
                 {% endif %}
             <th scope="row">{{ item.name }}</th>
             <td>{{ item.file }}</td>
             <td>
                 {% if item.status == True %}
                     <i class="bi bi-check-lg text-success"></i>
-                {% else %}
+                {% elif item.status == False %}
                     <i class="bi bi-x-lg text-danger"></i>
+                {% else %}
                 {% endif %}
             </td>
             <td>{{ item.rate.value }}</td>
@@ -38,6 +42,8 @@
             </tbody>
         </table>
     {% else %}
-        <p class="text-muted"> У вас еще нет ни одной активной деятельности <a class="text-muted" href="#">добавить?</a></p>
+        <p class="text-muted"> У вас еще нет ни одной активной деятельности <a class="text-muted"
+                                                                               href="{{ url_for('student_activity_new', activity_id=group_id) }}">добавить?</a>
+        </p>
     {% endif %}
 {% endblock right %}
