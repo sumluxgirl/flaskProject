@@ -20,7 +20,7 @@ Point rating system USATU
     pip install -U Flask-WTF
     pip install pyjwt
     cd pointrating/static
-    npm i bootstrap-icon
+    npm i bootstrap-icons
 ```
 ##quick start
 ```

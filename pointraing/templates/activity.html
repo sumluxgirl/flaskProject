@@ -1,9 +1,30 @@
 {% extends "student.html" %}
 {% block right %}
     {% if activity_by_user %}
-        <a class="btn btn-primary mt-1" href="{{ url_for('student_activity_new', activity_id=group_id) }}" role="button">
+        <a class="btn btn-primary mt-1" href="{{ url_for('student_activity_new', activity_id=group_id) }}"
+           role="button">
             Добавить
         </a>
+        {% for item in activity_by_user %}
+            <div class="card mt-2">
+                <div class="card-header">
+                    {{ item.name }}
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        Файл: {{ item.file }}<br/>
+                        Баллы: {{ item.rate.value }}<br/>
+                        {% if item.rate.sub_type %}
+                            Тип: {{ item.rate.sub_type.name }}<br/>
+                        {% endif %}
+                        {% if item.comment %}
+                            Комментарий: {{ item.comment }}<br/>
+                        {% endif %}
+                    </p>
+                    <a href="#" class="btn btn-primary">Go somewhere</a>
+                </div>
+            </div>
+        {% endfor %}
         <table class="table align-middle">
             <thead>
             <tr>
