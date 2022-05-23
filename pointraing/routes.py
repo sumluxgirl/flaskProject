@@ -1,5 +1,5 @@
 from pointraing import app, bcrypt, db
-from flask import render_template, url_for, redirect, request, flash
+from flask import render_template, url_for, redirect, request, flash, abort, send_from_directory
 from flask_login import login_user, current_user, logout_user, login_required
 from pointraing.forms import LoginForm, ResetPasswordForm, StudentActivityForm
 from pointraing.models import User, Attendance, Lab, LabsGrade, Grade, AttendanceGrade, ActivityType, ActivitySubType, \
@@ -111,16 +111,18 @@ def save_file(form_file):
         return redirect(request.url)
     _, f_ext = os.path.splitext(file.filename)
     picture_fn = random_hex + f_ext
-    picture_path = os.path.join(app.root_path, 'static/activity_files', picture_fn)
+    picture_path = os.path.join(app.config['UPLOAD_FOLDER'], picture_fn)
 
     file.save(picture_path)
     return picture_fn
 
 
-@app.route("/student/activity/<string:activity_id>/new", methods=['GET', 'POST'])
-@login_required
-def student_activity_new(activity_id):
-    form = StudentActivityForm()
+@app.route('/uploads/<name>')
+def download_file(name):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], name)
+
+
+def get_activity_sub_type_choices(activity_id):
     choices = []
     sub_type_id = None
     for g in RateActivity.query.filter(RateActivity.activity_type_id == activity_id):
@@ -128,6 +130,19 @@ def student_activity_new(activity_id):
             choices.append((g.id, g.sub_type.name))
         else:
             sub_type_id = g.id
+    return {
+        'choices': choices,
+        'sub_type_id': sub_type_id
+    }
+
+
+@app.route("/student/activity/<string:activity_id>/new", methods=['GET', 'POST'])
+@login_required
+def student_activity_new(activity_id):
+    form = StudentActivityForm()
+    sub_type_choices = get_activity_sub_type_choices(activity_id)
+    choices = sub_type_choices['choices']
+    sub_type_id = sub_type_choices['sub_type_id']
 
     form.sub_type_id.choices = choices
     if form.validate_on_submit():
@@ -149,9 +164,54 @@ def student_activity_new(activity_id):
                            active_tab='activity',
                            right_group=get_students_activity(),
                            group_id=activity_id,
-                           form=form,
-                           legend='Новая активная деятельность'
+                           form=form
                            )
+
+
+@app.route("/student/activity/<string:activity_id>/doc/<string:doc_id>/update", methods=['GET', 'POST'])
+@login_required
+def update_activity(activity_id, doc_id):
+    doc = Activity.query.get_or_404(doc_id)
+    if doc.user_id != current_user.id:
+        abort(403)
+    form = StudentActivityForm()
+    sub_type_choices = get_activity_sub_type_choices(activity_id)
+    choices = sub_type_choices['choices']
+    sub_type_id = sub_type_choices['sub_type_id']
+
+    form.sub_type_id.choices = choices
+    if form.validate_on_submit():
+        doc.name = form.name.data
+        picture_file = save_file(form.file)
+        doc.file = picture_file
+        doc.rate_id = sub_type_id if sub_type_id else form.sub_type_id.data
+        db.session.commit()
+        flash('Ваша грамота обновлена!', 'success')
+        return redirect(url_for('student_activity', activity_id=activity_id))
+    elif request.method == 'GET':
+        form.name.data = doc.name
+        form.file.data = send_from_directory(app.config['UPLOAD_FOLDER'], doc.file)
+        if not sub_type_id:
+            form.sub_type_id.data = doc.rate_id
+    return render_template('activity_new.html',
+                           title='Редактирование активной деятельности',
+                           active_tab='activity',
+                           right_group=get_students_activity(),
+                           group_id=activity_id,
+                           form=form
+                           )
+
+
+@app.route("/student/activity/<string:activity_id>/doc/<string:doc_id>/delete", methods=['GET'])
+@login_required
+def delete_activity(activity_id, doc_id):
+    doc = Activity.query.get_or_404(doc_id)
+    if doc.user_id != current_user.id:
+        abort(403)
+    db.session.delete(doc)
+    db.session.commit()
+    flash('Ваша грамота была удалена!', 'success')
+    return redirect(url_for('student_activity', activity_id=activity_id))
 
 
 @app.route("/about")

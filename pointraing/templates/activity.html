@@ -1,70 +1,58 @@
+{% macro cardItem(name, value, classValue) -%}
+    <div class="d-inline-flex w-100 py-1">
+        <div class="fw-bold pe-lg-1">
+            {{ name }}
+        </div>
+        <div class="{{ classValue if classValue }}">{{ value }}</div>
+    </div>
+{%- endmacro %}
+
 {% extends "student.html" %}
 {% block right %}
-    {% if activity_by_user %}
-        <a class="btn btn-primary mt-1" href="{{ url_for('student_activity_new', activity_id=group_id) }}"
-           role="button">
-            Добавить
-        </a>
-        {% for item in activity_by_user %}
-            <div class="card mt-2">
-                <div class="card-header">
-                    {{ item.name }}
-                </div>
-                <div class="card-body">
-                    <p class="card-text">
-                        Файл: {{ item.file }}<br/>
-                        Баллы: {{ item.rate.value }}<br/>
-                        {% if item.rate.sub_type %}
-                            Тип: {{ item.rate.sub_type.name }}<br/>
-                        {% endif %}
-                        {% if item.comment %}
-                            Комментарий: {{ item.comment }}<br/>
-                        {% endif %}
-                    </p>
-                    <a href="#" class="btn btn-primary">Go somewhere</a>
-                </div>
-            </div>
-        {% endfor %}
-        <table class="table align-middle">
-            <thead>
-            <tr>
-                <th scope="col">Название</th>
-                <th scope="col">Файл</th>
-                <th scope="col">Статус</th>
-                <th scope="col">Баллы</th>
-                <th scope="col">Подтип</th>
-                <th scope="col">Комментарий</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for item in activity_by_user %}
-                {% if not item.status %}
-                    <tr>
-                        {% elif item.status == True %}
-                    <tr class="table-success">
-                        {% else %}
-                    <tr class="table-danger {{ item.status }}">
-                {% endif %}
-            <th scope="row">{{ item.name }}</th>
-            <td>{{ item.file }}</td>
-            <td>
-                {% if item.status == True %}
-                    <i class="bi bi-check-lg text-success"></i>
-                {% elif item.status == False %}
-                    <i class="bi bi-x-lg text-danger"></i>
-                {% else %}
-                {% endif %}
-            </td>
-            <td>{{ item.rate.value }}</td>
-            <td>{{ item.rate.sub_type.name }}</td>
-            <td>{{ item.rate.comment }}</td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p class="text-muted"> У вас еще нет ни одной активной деятельности <a class="text-muted"
-                                                                               href="{{ url_for('student_activity_new', activity_id=group_id) }}">добавить?</a>
-        </p>
-    {% endif %}
+{% if activity_by_user %}
+<a class="btn btn-primary mt-1" href="{{ url_for('student_activity_new', activity_id=group_id) }}"
+   role="button">
+    Добавить
+</a>
+{% for item in activity_by_user %}
+<div class="card mt-2">
+    <div class="card-header fw-bold">
+        {{ item.name }}
+    </div>
+    <div class="card-body">
+        <div class="card-text">
+            {% set file_link %}
+            <a href="{{ url_for('download_file', name=item.file) }}"
+               download="">
+                {{ item.file }}
+            </a>
+            {% endset %}
+            {{ cardItem('Файл:', file_link) }}
+            {{ cardItem('Баллы:', item.rate.value) }}
+            {% if item.rate.sub_type %}
+                {{ cardItem('Тип:', item.rate.sub_type.name) }}
+            {% endif %}
+            {% if item.comment %}
+                {{ cardItem('Комментарий:', item.comment) }}
+            {% endif %}
+            {% if item.status == True %}
+                {{ cardItem('Статус:', 'Принято', 'text-success') }}
+            {% elif item.status == False %}
+                {{ cardItem('Статус:', 'Отклонено', 'text-danger') }}
+            {% else %}
+                {{ cardItem('Статус:', 'На рассмотрении') }}
+                <a href="{{ url_for('update_activity', activity_id=group_id, doc_id=item.id) }}"
+                   class="btn btn-outline-primary">Редактировать</a>
+                <a href="{{ url_for('delete_activity', activity_id=group_id, doc_id=item.id) }}"
+                   class="btn btn-outline-danger">Удалить</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<p class="text-muted"> У вас еще нет ни одной активной деятельности <a class="text-muted"
+                                                                       href="{{ url_for('student_activity_new', activity_id=group_id) }}">добавить?</a>
+</p>
+{% endif %}
 {% endblock right %}
