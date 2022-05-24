@@ -10,7 +10,7 @@ def home():
     if not current_user.is_authenticated:
         return redirect(url_for('users.login'))
     if current_user.role.name == 'Студент':
-        return redirect(url_for('students.student_education'))
+        return redirect(url_for('students.education'))
     return render_template('home.html')
 
 

@@ -10,7 +10,7 @@
 {% extends "student.html" %}
 {% block right %}
 {% if activity_by_user %}
-<a class="btn btn-primary mt-1" href="{{ url_for('students.student_activity_new', activity_id=group_id) }}"
+<a class="btn btn-primary mt-1" href="{{ url_for('students.activity_new', activity_id=group_id) }}"
    role="button">
     Добавить
 </a>
@@ -52,7 +52,7 @@
 {% endfor %}
 {% else %}
 <p class="text-muted"> У вас еще нет ни одной активной деятельности <a class="text-muted"
-                                                                       href="{{ url_for('students.student_activity_new', activity_id=group_id) }}">добавить?</a>
+                                                                       href="{{ url_for('students.activity_new', activity_id=group_id) }}">добавить?</a>
 </p>
 {% endif %}
 {% endblock right %}

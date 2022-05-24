@@ -8,13 +8,13 @@ import uuid
 import os
 import secrets
 
-students = Blueprint('students', __name__, template_folder='templates')
+students = Blueprint('students', __name__, template_folder='templates', url_prefix='/students')
 
 
-@students.route("/student/education")
-@students.route("/student/education/<string:subject_id>")
+@students.route("/education")
+@students.route("/education/<string:subject_id>")
 @login_required
-def student_education(subject_id=None):
+def education(subject_id=None):
     group = current_user.group
     attendance_subjects = Attendance.query.filter_by(group_id=group.id).group_by(Attendance.subject_id).all()
     subjects = []
@@ -76,10 +76,10 @@ def get_students_activity():
     return ActivityType.query.all()
 
 
-@students.route("/student/activity")
-@students.route("/student/activity/<string:activity_id>")
+@students.route("/activity")
+@students.route("/activity/<string:activity_id>")
 @login_required
-def student_activity(activity_id=None):
+def activity(activity_id=None):
     activity = get_students_activity()
     if not activity_id and len(activity) > 0:
         activity_id = activity[0].id
@@ -123,9 +123,9 @@ def get_activity_sub_type_choices(activity_id):
     }
 
 
-@students.route("/student/activity/<string:activity_id>/new", methods=['GET', 'POST'])
+@students.route("/activity/<string:activity_id>/new", methods=['GET', 'POST'])
 @login_required
-def student_activity_new(activity_id):
+def activity_new(activity_id):
     form = StudentActivityForm()
     sub_type_choices = get_activity_sub_type_choices(activity_id)
     choices = sub_type_choices['choices']
@@ -145,7 +145,7 @@ def student_activity_new(activity_id):
         db.session.add(activity)
         db.session.commit()
         flash('Ваша грамота принята на рассмотрение!', 'success')
-        return redirect(url_for('students.student_activity', activity_id=activity_id))
+        return redirect(url_for('students.activity', activity_id=activity_id))
     return render_template('activity_new.html',
                            title='Новая активная деятельность',
                            active_tab='activity',
@@ -155,7 +155,7 @@ def student_activity_new(activity_id):
                            )
 
 
-@students.route("/student/activity/<string:activity_id>/doc/<string:doc_id>/update", methods=['GET', 'POST'])
+@students.route("/activity/<string:activity_id>/doc/<string:doc_id>/update", methods=['GET', 'POST'])
 @login_required
 def update_activity(activity_id, doc_id):
     doc = Activity.query.get_or_404(doc_id)
@@ -174,7 +174,7 @@ def update_activity(activity_id, doc_id):
         doc.rate_id = sub_type_id if sub_type_id else form.sub_type_id.data
         db.session.commit()
         flash('Ваша грамота обновлена!', 'success')
-        return redirect(url_for('students.student_activity', activity_id=activity_id))
+        return redirect(url_for('students.activity', activity_id=activity_id))
     elif request.method == 'GET':
         form.name.data = doc.name
         form.file.data = send_from_directory(current_app.config['UPLOAD_FOLDER'], doc.file)
@@ -189,7 +189,7 @@ def update_activity(activity_id, doc_id):
                            )
 
 
-@students.route("/student/activity/<string:activity_id>/doc/<string:doc_id>/delete", methods=['GET'])
+@students.route("/activity/<string:activity_id>/doc/<string:doc_id>/delete", methods=['GET'])
 @login_required
 def delete_activity(activity_id, doc_id):
     doc = Activity.query.get_or_404(doc_id)
@@ -198,5 +198,5 @@ def delete_activity(activity_id, doc_id):
     db.session.delete(doc)
     db.session.commit()
     flash('Ваша грамота была удалена!', 'success')
-    return redirect(url_for('students.student_activity', activity_id=activity_id))
+    return redirect(url_for('students.activity', activity_id=activity_id))
 
