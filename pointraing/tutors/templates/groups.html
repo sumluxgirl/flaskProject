@@ -1,0 +1,52 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div class="row pt-2">
+        <div class="col-md-4">
+            {% for item in groups %}
+                <div class="list-group list-group-flush">
+                    {% if item.id == group_id %}
+                        <a href="{{ url_for('tutors.get_groups', subject_id=subject_id, group_id=item.id) }}"
+                           class="list-group-item list-group-item-action active" aria-current="true">
+                    {% else %}
+                        <a href="{{ url_for('tutors.get_groups', subject_id=subject_id, group_id=item.id) }}"
+                           class="list-group-item list-group-item-action">
+                    {% endif %}
+                    {{ item.name }}
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="col-md-8">
+            <ul class="nav nav-tabs justify-content-end">
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="#">Посещение</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Защита лабораторных</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Зачет / Экзамен</a>
+                </li>
+            </ul>
+            <div class="row">
+                <div class="col-md-4">
+                    {% if students %}
+                        {% for item in students %}
+                            <div class="list-group list-group-flush">
+                                <a href="#"
+                                   class="list-group-item list-group-item-action">
+                                    {{ item.name }}
+                                </a>
+                            </div>
+                        {% endfor %}
+                        </div>
+                        <div class="col-md-8">
+                            Блок
+                        </div>
+                    {% else %}
+                        <p class="text-muted">Данных пока нет, обратитесь к администратору системы</p>
+                    {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

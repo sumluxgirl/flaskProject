@@ -80,7 +80,6 @@ class Subject(db.Model):
     id = db.Column(db.String(32), primary_key=True)
     name = db.Column(db.String(120), nullable=False)
     count_hours = db.Column(db.Integer, nullable=False)
-    description = db.Column(db.String(240), nullable=True)
     labs = db.relationship('Lab', backref='subject', lazy=True)
     attendance = db.relationship('Attendance', backref='subject', lazy=True)
 
