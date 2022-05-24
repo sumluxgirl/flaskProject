@@ -7,10 +7,13 @@ main = Blueprint('main', __name__, template_folder='templates')
 @main.route("/")
 @main.route("/home")
 def home():
+    print(current_user.role.name)
     if not current_user.is_authenticated:
         return redirect(url_for('users.login'))
     if current_user.role.name == 'Студент':
         return redirect(url_for('students.education'))
+    elif current_user.role.name == 'Преподаватель':
+        return redirect(url_for('tutors.subjects'))
     return render_template('home.html')
 
 

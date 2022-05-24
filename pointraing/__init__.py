@@ -23,7 +23,9 @@ def create_app():
     from pointraing.main.routes import main
     from pointraing.users.routes import users
     from pointraing.students.routes import students
+    from pointraing.tutors.routes import tutors
     app.register_blueprint(main)
     app.register_blueprint(users)
     app.register_blueprint(students)
+    app.register_blueprint(tutors)
     return app
