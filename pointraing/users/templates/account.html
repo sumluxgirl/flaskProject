@@ -12,7 +12,7 @@
                     {% if group_name %}
                         <p class="card-text">Группа: {{ group_name }}</p>
                     {% endif %}
-                    <a class="text-muted" href="{{ url_for('reset_token', token=current_user.get_reset_token()) }}">Сменить пароль?</a>
+                    <a class="text-muted" href="{{ url_for('users.reset_token', token=current_user.get_reset_token()) }}">Сменить пароль?</a>
                 </div>
             </div>
         </div>

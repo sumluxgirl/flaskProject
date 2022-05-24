@@ -37,13 +37,13 @@
                     {% if current_user.is_authenticated %}
 
                         <a class="nav-item nav-link d-inline-block"
-                           href="{{ url_for('account') }}">
+                           href="{{ url_for('users.account') }}">
                             <i class="bi bi-person-fill d-inline-block"></i>
                             {{ " ".join((current_user.surname, current_user.name[0], current_user.patronymic[0])) }}
                         </a>
-                        <a class="nav-item nav-link" href="{{ url_for('logout') }}">Logout</a>
+                        <a class="nav-item nav-link" href="{{ url_for('users.logout') }}">Logout</a>
                     {% else %}
-                        <a class="nav-item nav-link" href="{{ url_for('login') }}">Login</a>
+                        <a class="nav-item nav-link" href="{{ url_for('users.login') }}">Login</a>
                     {% endif %}
                 </div>
             </div>

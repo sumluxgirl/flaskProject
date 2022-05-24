@@ -10,7 +10,7 @@
 {% extends "student.html" %}
 {% block right %}
 {% if activity_by_user %}
-<a class="btn btn-primary mt-1" href="{{ url_for('student_activity_new', activity_id=group_id) }}"
+<a class="btn btn-primary mt-1" href="{{ url_for('students.student_activity_new', activity_id=group_id) }}"
    role="button">
     Добавить
 </a>
@@ -22,7 +22,7 @@
     <div class="card-body">
         <div class="card-text">
             {% set file_link %}
-            <a href="{{ url_for('download_file', name=item.file) }}"
+            <a href="{{ url_for('main.download_file', name=item.file) }}"
                download="">
                 {{ item.file }}
             </a>
@@ -41,9 +41,9 @@
                 {{ cardItem('Статус:', 'Отклонено', 'text-danger') }}
             {% else %}
                 {{ cardItem('Статус:', 'На рассмотрении') }}
-                <a href="{{ url_for('update_activity', activity_id=group_id, doc_id=item.id) }}"
+                <a href="{{ url_for('students.update_activity', activity_id=group_id, doc_id=item.id) }}"
                    class="btn btn-outline-primary">Редактировать</a>
-                <a href="{{ url_for('delete_activity', activity_id=group_id, doc_id=item.id) }}"
+                <a href="{{ url_for('students.delete_activity', activity_id=group_id, doc_id=item.id) }}"
                    class="btn btn-outline-danger">Удалить</a>
             {% endif %}
         </div>
@@ -52,7 +52,7 @@
 {% endfor %}
 {% else %}
 <p class="text-muted"> У вас еще нет ни одной активной деятельности <a class="text-muted"
-                                                                       href="{{ url_for('student_activity_new', activity_id=group_id) }}">добавить?</a>
+                                                                       href="{{ url_for('students.student_activity_new', activity_id=group_id) }}">добавить?</a>
 </p>
 {% endif %}
 {% endblock right %}

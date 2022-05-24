@@ -1,8 +1,8 @@
-from pointraing import db, login_manager, app
+from pointraing import db, login_manager
 from jwt import encode as encode_jwt, decode as decode_jwt, ExpiredSignatureError, InvalidTokenError
 from flask_login import UserMixin
 from datetime import datetime, timedelta
-from flask import flash
+from flask import flash, current_app
 
 
 @login_manager.user_loader
@@ -45,7 +45,7 @@ class User(db.Model, UserMixin):
             }
             return encode_jwt(
                 payload,
-                app.config.get('SECRET_KEY'),
+                current_app.config.get('SECRET_KEY'),
                 algorithm='HS256'
             )
         except Exception as e:
@@ -54,7 +54,7 @@ class User(db.Model, UserMixin):
     @staticmethod
     def verify_reset_token(token):
         try:
-            user_id = decode_jwt(token, app.config.get('SECRET_KEY'), algorithms=["HS256"])['sub']
+            user_id = decode_jwt(token, current_app.config.get('SECRET_KEY'), algorithms=["HS256"])['sub']
             return User.query.get(user_id)
         except ExpiredSignatureError:
             flash('Signature expired. Please log in again.')

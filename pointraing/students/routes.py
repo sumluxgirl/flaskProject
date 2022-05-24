@@ -1,16 +1,18 @@
-from pointraing import app, bcrypt, db
-from flask import render_template, url_for, redirect, request, flash, abort, send_from_directory
-from flask_login import login_user, current_user, logout_user, login_required
-from pointraing.forms import LoginForm, ResetPasswordForm, StudentActivityForm
-from pointraing.models import User, Attendance, Lab, LabsGrade, Grade, AttendanceGrade, ActivityType, ActivitySubType, \
+from pointraing import db
+from flask import render_template, url_for, redirect, request, flash, abort, send_from_directory, current_app, Blueprint
+from flask_login import current_user, login_required
+from pointraing.students.forms import StudentActivityForm
+from pointraing.models import Attendance, Lab, LabsGrade, Grade, AttendanceGrade, ActivityType, ActivitySubType, \
     RateActivity, Activity
 import uuid
 import os
 import secrets
 
+students = Blueprint('students', __name__, template_folder='templates')
 
-@app.route("/student/education")
-@app.route("/student/education/<string:subject_id>")
+
+@students.route("/student/education")
+@students.route("/student/education/<string:subject_id>")
 @login_required
 def student_education(subject_id=None):
     group = current_user.group
@@ -74,8 +76,8 @@ def get_students_activity():
     return ActivityType.query.all()
 
 
-@app.route("/student/activity")
-@app.route("/student/activity/<string:activity_id>")
+@students.route("/student/activity")
+@students.route("/student/activity/<string:activity_id>")
 @login_required
 def student_activity(activity_id=None):
     activity = get_students_activity()
@@ -101,15 +103,10 @@ def save_file(form_file):
         return redirect(request.url)
     _, f_ext = os.path.splitext(file.filename)
     picture_fn = random_hex + f_ext
-    picture_path = os.path.join(app.config['UPLOAD_FOLDER'], picture_fn)
+    picture_path = os.path.join(current_app.config['UPLOAD_FOLDER'], picture_fn)
 
     file.save(picture_path)
     return picture_fn
-
-
-@app.route('/uploads/<name>')
-def download_file(name):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], name)
 
 
 def get_activity_sub_type_choices(activity_id):
@@ -126,7 +123,7 @@ def get_activity_sub_type_choices(activity_id):
     }
 
 
-@app.route("/student/activity/<string:activity_id>/new", methods=['GET', 'POST'])
+@students.route("/student/activity/<string:activity_id>/new", methods=['GET', 'POST'])
 @login_required
 def student_activity_new(activity_id):
     form = StudentActivityForm()
@@ -148,7 +145,7 @@ def student_activity_new(activity_id):
         db.session.add(activity)
         db.session.commit()
         flash('Ваша грамота принята на рассмотрение!', 'success')
-        return redirect(url_for('student_activity', activity_id=activity_id))
+        return redirect(url_for('students.student_activity', activity_id=activity_id))
     return render_template('activity_new.html',
                            title='Новая активная деятельность',
                            active_tab='activity',
@@ -158,7 +155,7 @@ def student_activity_new(activity_id):
                            )
 
 
-@app.route("/student/activity/<string:activity_id>/doc/<string:doc_id>/update", methods=['GET', 'POST'])
+@students.route("/student/activity/<string:activity_id>/doc/<string:doc_id>/update", methods=['GET', 'POST'])
 @login_required
 def update_activity(activity_id, doc_id):
     doc = Activity.query.get_or_404(doc_id)
@@ -177,10 +174,10 @@ def update_activity(activity_id, doc_id):
         doc.rate_id = sub_type_id if sub_type_id else form.sub_type_id.data
         db.session.commit()
         flash('Ваша грамота обновлена!', 'success')
-        return redirect(url_for('student_activity', activity_id=activity_id))
+        return redirect(url_for('students.student_activity', activity_id=activity_id))
     elif request.method == 'GET':
         form.name.data = doc.name
-        form.file.data = send_from_directory(app.config['UPLOAD_FOLDER'], doc.file)
+        form.file.data = send_from_directory(current_app.config['UPLOAD_FOLDER'], doc.file)
         if not sub_type_id:
             form.sub_type_id.data = doc.rate_id
     return render_template('activity_new.html',
@@ -192,7 +189,7 @@ def update_activity(activity_id, doc_id):
                            )
 
 
-@app.route("/student/activity/<string:activity_id>/doc/<string:doc_id>/delete", methods=['GET'])
+@students.route("/student/activity/<string:activity_id>/doc/<string:doc_id>/delete", methods=['GET'])
 @login_required
 def delete_activity(activity_id, doc_id):
     doc = Activity.query.get_or_404(doc_id)
@@ -201,55 +198,5 @@ def delete_activity(activity_id, doc_id):
     db.session.delete(doc)
     db.session.commit()
     flash('Ваша грамота была удалена!', 'success')
-    return redirect(url_for('student_activity', activity_id=activity_id))
+    return redirect(url_for('students.student_activity', activity_id=activity_id))
 
-
-@app.route("/login", methods=['GET', 'POST'])
-def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('home'))
-    form = LoginForm()
-    if form.validate_on_submit():
-        user = User.query.filter_by(login=form.login.data).first()
-        if user and bcrypt.check_password_hash(user.password, form.password.data):
-            login_user(user, remember=form.remember.data)
-            next_page = request.args.get('next')
-            return redirect(next_page) if next_page else redirect(url_for('home'))
-        else:
-            flash('Войти не удалось. Пожалуйста, проверьте логин и пароль', 'danger')
-    return render_template('login.html', title='Login', form=form)
-
-
-@app.route("/logout")
-def logout():
-    logout_user()
-    return redirect(url_for('home'))
-
-
-@app.route("/account")
-@login_required
-def account():
-    user_name_tuple = (current_user.surname, current_user.name, current_user.patronymic)
-    full_name = ' '.join(user_name_tuple)
-    role = current_user.role.name
-    group = current_user.group
-    group_name = group.name if group else None
-    return render_template('account.html', title='Account', full_name=full_name, role=role, group_name=group_name)
-
-
-@app.route("/reset_password/<token>", methods=['GET', 'POST'])
-def reset_token(token):
-    if not current_user.is_authenticated:
-        return redirect(url_for('login'))
-    user = User.verify_reset_token(token)
-    if user is None:
-        flash('Недействительный или просроченный токен', 'warning')
-        return redirect(url_for('account'))
-    form = ResetPasswordForm()
-    if form.validate_on_submit():
-        hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-        user.password = hashed_password
-        db.session.commit()
-        flash('Пароль был изменен', 'success')
-        return redirect(url_for('login'))
-    return render_template('reset_token.html', title='Reset Password', form=form)

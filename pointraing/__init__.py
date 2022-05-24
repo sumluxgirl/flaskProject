@@ -2,30 +2,28 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
-from pointraing.main.routes import main
 import os
 
-app = Flask(__name__)
-UPLOAD_FOLDER = os.path.join(app.root_path, 'static/activity_files')
-app.config['SECRET_KEY'] = '5791628bb0b13ce0c676dfde280ba245'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-db = SQLAlchemy(app)
-bcrypt = Bcrypt(app)
-login_manager = LoginManager(app)
-login_manager.login_view = 'login'
+db = SQLAlchemy()
+bcrypt = Bcrypt()
+login_manager = LoginManager()
+login_manager.login_view = 'users.login'
 login_manager.login_message_category = 'info'
-app.register_blueprint(main)
 
 
 def create_app():
-    application = Flask(__name__)
-    application.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
-    db.init_app(application)
-    return application
-
-
-# app = create_app()
-# app.app_context().push()
-# adding_data()
-from pointraing import routes
+    app = Flask(__name__)
+    app.config['SECRET_KEY'] = '5791628bb0b13ce0c676dfde280ba245'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+    UPLOAD_FOLDER = os.path.join(app.root_path, 'static/activity_files')
+    app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+    db.init_app(app)
+    bcrypt.init_app(app)
+    login_manager.init_app(app)
+    from pointraing.main.routes import main
+    from pointraing.users.routes import users
+    from pointraing.students.routes import students
+    app.register_blueprint(main)
+    app.register_blueprint(users)
+    app.register_blueprint(students)
+    return app
