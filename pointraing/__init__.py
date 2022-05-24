@@ -2,8 +2,8 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
+from pointraing.main.routes import main
 import os
-
 
 app = Flask(__name__)
 UPLOAD_FOLDER = os.path.join(app.root_path, 'static/activity_files')
@@ -15,6 +15,7 @@ bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 login_manager.login_message_category = 'info'
+app.register_blueprint(main)
 
 
 def create_app():
@@ -22,6 +23,7 @@ def create_app():
     application.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
     db.init_app(application)
     return application
+
 
 # app = create_app()
 # app.app_context().push()

@@ -9,16 +9,6 @@ import os
 import secrets
 
 
-@app.route("/")
-@app.route("/home")
-def home():
-    if not current_user.is_authenticated:
-        return redirect(url_for('login'))
-    if current_user.role.name == 'Студент':
-        return redirect(url_for('student_education'))
-    return render_template('home.html')
-
-
 @app.route("/student/education")
 @app.route("/student/education/<string:subject_id>")
 @login_required
@@ -214,11 +204,6 @@ def delete_activity(activity_id, doc_id):
     return redirect(url_for('student_activity', activity_id=activity_id))
 
 
-@app.route("/about")
-def about():
-    return render_template('about.html', title='About')
-
-
 @app.route("/login", methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -249,7 +234,6 @@ def account():
     role = current_user.role.name
     group = current_user.group
     group_name = group.name if group else None
-    print(current_user.get_reset_token())
     return render_template('account.html', title='Account', full_name=full_name, role=role, group_name=group_name)
 
 
