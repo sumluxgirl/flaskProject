@@ -70,7 +70,7 @@ class User(db.Model, UserMixin):
 class Group(db.Model):
     id = db.Column(db.String(32), primary_key=True)
     name = db.Column(db.String(120), nullable=False)
-    users = db.relationship('User', backref='group', lazy=True)
+    users = db.relationship('User', backref='group', lazy='dynamic')
 
     def __repr__(self):
         return "Group('{self.name}')"
@@ -125,7 +125,7 @@ class Attendance(db.Model):
     subject_id = db.Column(db.String(32), db.ForeignKey('subject.id'), nullable=False)
     group_id = db.Column(db.String(32), db.ForeignKey('group.id'), nullable=False)
     group = db.relationship('Group',
-                            backref=db.backref('attendance', lazy=True))
+                            backref=db.backref('attendance', lazy='dynamic'))
     type_id = db.Column(db.String(32), db.ForeignKey('attendance_type.id'), nullable=False)
     type = db.relationship('AttendanceType',
                            backref=db.backref('attendance', lazy=True))

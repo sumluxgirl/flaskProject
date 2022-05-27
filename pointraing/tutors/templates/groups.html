@@ -29,23 +29,40 @@
                 </li>
             </ul>
             <div class="row">
-                <div class="col-md-4">
-                    {% if students %}
-                        {% for item in students %}
-                            <div class="list-group list-group-flush">
-                                <a href="#"
-                                   class="list-group-item list-group-item-action">
-                                    {{ item.name }}
-                                </a>
-                            </div>
-                        {% endfor %}
-                        </div>
-                        <div class="col-md-8">
-                            Блок
-                        </div>
-                    {% else %}
-                        <p class="text-muted">Данных пока нет, обратитесь к администратору системы</p>
-                    {% endif %}
+                {% if students %}
+                    <div class="col">
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th scope="col">Список</th>
+                                {% for item in attendance %}
+                                    <th scope="col">{{ item.date.strftime('%d/%m') }}</th>
+                                {% endfor %}
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for item in students %}
+                                <tr>
+                                    <th scope="row">{{ item.name }}</th>
+                                    {% for item_attendance in attendance %}
+                                        <td>
+                                            {% if item[item_attendance.id] %}
+                                                {% if item[item_attendance.id].active %}
+                                                    <i class="bi bi-plus"></i>
+                                                {% endif %}
+                                            {% else %}
+                                                <i class="bi bi-x-square-fill"></i>
+                                            {% endif %}
+                                        </td>
+                                    {% endfor %}
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">Данных пока нет, обратитесь к администратору системы</p>
+                {% endif %}
             </div>
         </div>
     </div>
