@@ -35,26 +35,14 @@
                             <thead>
                             <tr>
                                 <th scope="col">Список</th>
-                                {% for item in attendance %}
-                                    <th scope="col">{{ item.date.strftime('%d/%m') }}</th>
-                                {% endfor %}
+                                {% block thead %}{% endblock %}
                             </tr>
                             </thead>
                             <tbody>
                             {% for item in students %}
                                 <tr>
                                     <th scope="row">{{ item.name }}</th>
-                                    {% for item_attendance in attendance %}
-                                        <td>
-                                            {% if item[item_attendance.id] %}
-                                                {% if item[item_attendance.id].active %}
-                                                    <i class="bi bi-plus"></i>
-                                                {% endif %}
-                                            {% else %}
-                                                <i class="bi bi-x-square-fill"></i>
-                                            {% endif %}
-                                        </td>
-                                    {% endfor %}
+                                    {% block tbody_td scoped %}{{ item }}{% endblock %}
                                 </tr>
                             {% endfor %}
                             </tbody>

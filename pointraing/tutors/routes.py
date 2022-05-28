@@ -53,7 +53,7 @@ def get_groups(subject_id, group_id=None):
                 }
             })
         students.append(student)
-    return render_template('groups.html',
+    return render_template('attendance.html',
                            title="Учебные предметы",
                            groups=groups,
                            subject_id=subject_id,
