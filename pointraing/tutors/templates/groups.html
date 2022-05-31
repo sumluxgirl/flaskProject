@@ -5,10 +5,10 @@
             {% for item in groups %}
                 <div class="list-group list-group-flush">
                     {% if item.id == group_id %}
-                        <a href="{{ url_for('tutors.get_groups', subject_id=subject_id, group_id=item.id) }}"
+                        <a href="{{ url_for('tutors.get_attendance', subject_id=subject_id, group_id=item.id) }}"
                            class="list-group-item list-group-item-action active" aria-current="true">
                     {% else %}
-                        <a href="{{ url_for('tutors.get_groups', subject_id=subject_id, group_id=item.id) }}"
+                        <a href="{{ url_for('tutors.get_attendance', subject_id=subject_id, group_id=item.id) }}"
                            class="list-group-item list-group-item-action">
                     {% endif %}
                     {{ item.name }}
@@ -31,22 +31,24 @@
             <div class="row">
                 {% if students %}
                     <div class="col">
-                        <table class="table">
-                            <thead>
-                            <tr>
-                                <th scope="col">Список</th>
-                                {% block thead %}{% endblock %}
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {% for item in students %}
+                        {% block table %}
+                            <table class="table">
+                                <thead>
                                 <tr>
-                                    <th scope="row">{{ item.name }}</th>
-                                    {% block tbody_td scoped %}{{ item }}{% endblock %}
+                                    <th scope="col">Список</th>
+                                    {% block thead %}{% endblock %}
                                 </tr>
-                            {% endfor %}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                {% for item in students %}
+                                    <tr>
+                                        <th scope="row">{{ item.name }}</th>
+                                        {% block tbody_td scoped %}{{ item }}{% endblock %}
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        {% endblock table %}
                     </div>
                 {% else %}
                     <p class="text-muted">Данных пока нет, обратитесь к администратору системы</p>

@@ -12,7 +12,7 @@
                     <ul>
                     {% for item in subjects %}
                         <li>
-                            <a href="{{ url_for('tutors.get_groups', subject_id=item.id) }}">{{ item.name }}</a>
+                            <a href="{{ url_for('tutors.get_attendance', subject_id=item.id) }}">{{ item.name }}</a>
                         </li>
                     {% endfor %}
                     </ul>

@@ -1,19 +1,25 @@
 {% extends "groups.html" %}
 {% block thead %}
     {% for item in attendance %}
-        <th scope="col">{{ item.date.strftime('%d/%m') }}</th>
+        <th scope="col">
+            <a href="{{ url_for('tutors.attendance_grade_update', subject_id=subject_id, group_id=group_id, attendance_id=item.id)}}">
+                {{ item.date.strftime('%d/%m') }}
+            </a>
+        </th>
     {% endfor %}
 {% endblock %}
 {% block tbody_td %}
     {% for item_attendance in attendance %}
         <td>
-            {% if item[item_attendance.id] %}
-                {% if item[item_attendance.id].active %}
-                    <i class="bi bi-plus"></i>
+            {% block attendance_grade scoped%}
+                {% if item[item_attendance.id] %}
+                    {% if item[item_attendance.id].active %}
+                        <i class="bi bi-plus"></i>
+                    {% endif %}
+                {% else %}
+                    <i class="bi bi-x-square-fill"></i>
                 {% endif %}
-            {% else %}
-                <i class="bi bi-x-square-fill"></i>
-            {% endif %}
+            {% endblock %}
         </td>
     {% endfor %}
 {% endblock %}
