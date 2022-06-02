@@ -16,9 +16,22 @@
                     {% for item_attendance in attendance %}
                         <td>
                             {% if attendance_id == item_attendance.id %}
-                                edit
+                                {% if form[item.id].choices %}
+                                    <div class="form-group">
+                                        {% if form[item.id].errors %}
+                                            {{ form[item.id](class="form-control form-control-lg is-invalid") }}
+                                            <div class="invalid-feedback">
+                                                {% for error in form[item.id].errors %}
+                                                    <span>{{ error }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            {{ form[item.id](class="form-control form-control-lg") }}
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
                             {% else %}
-                                {% block attendance_grade scoped%}{{ super() }} {% endblock %}
+                                {% block attendance_grade scoped %}{{ super() }} {% endblock %}
                             {% endif %}
                         </td>
                     {% endfor %}

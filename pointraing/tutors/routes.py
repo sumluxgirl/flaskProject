@@ -1,8 +1,11 @@
-from flask import Blueprint, render_template, redirect, flash
+from flask import Blueprint, render_template, redirect, flash, url_for, request
 from flask_login import login_required
 from pointraing.models import Subject, Attendance, User, Group, AttendanceGrade
-from flask_wtf import FlaskForm
-from wtforms import SubmitField, SelectField
+from pointraing import db
+from wtforms import SelectField
+from datetime import datetime
+from pointraing.tutors.forms import AttendanceGradeForm, CHOICES, IS_EXIST, NOT_EXIST, ACTIVE
+import uuid
 from wtforms.validators import DataRequired
 
 tutors = Blueprint('tutors', __name__, template_folder='templates', url_prefix='/tutors')
@@ -84,30 +87,69 @@ def get_attendance(subject_id, group_id=None):
                            )
 
 
-@tutors.route("/subjects/<string:subject_id>/attendance/<string:attendance_id>/update")
-@tutors.route("/subjects/<string:subject_id>/groups/<string:group_id>/attendance/<string:attendance_id>/update")
+@tutors.route("/subjects/<string:subject_id>/attendance/<string:attendance_id>/update", methods=['GET', 'POST'])
+@tutors.route("/subjects/<string:subject_id>/groups/<string:group_id>/attendance/<string:attendance_id>/update",
+              methods=['GET', 'POST'])
 @login_required
 def attendance_grade_update(subject_id, attendance_id, group_id=None):
+    current_attendance = Attendance.query.get_or_404(attendance_id)
+    is_new = (current_attendance.date - datetime.now()).total_seconds() >= 0
+    if not current_attendance:
+        flash('Такого посещения нет, обратитесь к администратору системы', 'warning')
+        return redirect('main.home')
     lists = get_groups(subject_id, group_id)
     if not group_id:
         current_group = lists['current_group']
         group_id = current_group.id
 
-    class AttendanceGradeForm(FlaskForm):
-        pass
-    AttendanceGradeForm.submit = SubmitField('Сохранить')
-
     students = lists['students']
-    choices = [
-        (1, 'Присутсвует'),
-        (2, 'Отсутсвует'),
-        (3, 'Активность')
-    ]
+    list_sorter = {}
     for item in students:
-        field_name = '_'.join(item['id'], item[attendance_id]['id']) if attendance_id in item else item['id']
-        setattr(AttendanceGradeForm, field_name, SelectField(field_name, choices=choices))
+        field_name = item['id']
+        if is_new and attendance_id in item:
+            list_sorter.update({
+                item['id']: item[attendance_id]
+            })
+        setattr(AttendanceGradeForm, field_name, SelectField(field_name, choices=CHOICES))
 
     form = AttendanceGradeForm()
+
+    if form.validate_on_submit():
+        attendances_grade = []
+        for item in students:
+            student_id = item['id']
+            print(form[student_id].data, (IS_EXIST, ACTIVE))
+            print(form[student_id].data in (IS_EXIST, ACTIVE))
+            if form[student_id].data in (IS_EXIST, ACTIVE):
+                if is_new or student_id not in list_sorter:
+                    attendances_grade.append(AttendanceGrade(
+                        id=uuid.uuid4().hex,
+                        user_id=student_id,
+                        attendance_id=attendance_id,
+                        active=1 if form[student_id].data == ACTIVE else 0
+                    ))
+                else:
+                    attendance_grade = AttendanceGrade.query.get_or_404(list_sorter[student_id].id)
+                    attendance_grade.active = 1 if form[student_id].data == ACTIVE else 0
+            else:
+                if student_id in list_sorter:
+                    attendance_grade = AttendanceGrade.query.get_or_404(list_sorter[student_id].id)
+                    db.session.delete(attendance_grade)
+        print(attendances_grade)
+        if len(attendances_grade) > 0:
+            db.session.add_all(attendances_grade)
+        db.session.commit()
+        flash('Посещение обновлено!', 'success')
+        return redirect(url_for('tutors.get_attendance', subject_id=subject_id, group_id=group_id))
+    elif request.method == 'GET':
+        if not is_new:
+            for item in students:
+                student_id = item['id']
+                if student_id in list_sorter:
+                    form[student_id].data = (ACTIVE if list_sorter[student_id].active else IS_EXIST)
+                else:
+                    form[student_id].data = (NOT_EXIST)
+
     return render_template('attendance_update.html',
                            title="Посещение предмета",
                            groups=lists['groups'],
