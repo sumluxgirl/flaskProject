@@ -106,11 +106,11 @@ def attendance_grade_update(subject_id, attendance_id, group_id=None):
     list_sorter = {}
     for item in students:
         field_name = item['id']
-        if is_new and attendance_id in item:
+        if attendance_id in item:
             list_sorter.update({
                 item['id']: item[attendance_id]
             })
-        setattr(AttendanceGradeForm, field_name, SelectField(field_name, choices=CHOICES))
+        setattr(AttendanceGradeForm, field_name, SelectField(field_name, choices=CHOICES, coerce=int))
 
     form = AttendanceGradeForm()
 
@@ -118,8 +118,6 @@ def attendance_grade_update(subject_id, attendance_id, group_id=None):
         attendances_grade = []
         for item in students:
             student_id = item['id']
-            print(form[student_id].data, (IS_EXIST, ACTIVE))
-            print(form[student_id].data in (IS_EXIST, ACTIVE))
             if form[student_id].data in (IS_EXIST, ACTIVE):
                 if is_new or student_id not in list_sorter:
                     attendances_grade.append(AttendanceGrade(
@@ -129,13 +127,12 @@ def attendance_grade_update(subject_id, attendance_id, group_id=None):
                         active=1 if form[student_id].data == ACTIVE else 0
                     ))
                 else:
-                    attendance_grade = AttendanceGrade.query.get_or_404(list_sorter[student_id].id)
+                    attendance_grade = AttendanceGrade.query.get_or_404(list_sorter[student_id]['id'])
                     attendance_grade.active = 1 if form[student_id].data == ACTIVE else 0
             else:
                 if student_id in list_sorter:
-                    attendance_grade = AttendanceGrade.query.get_or_404(list_sorter[student_id].id)
+                    attendance_grade = AttendanceGrade.query.get_or_404(list_sorter[student_id]['id'])
                     db.session.delete(attendance_grade)
-        print(attendances_grade)
         if len(attendances_grade) > 0:
             db.session.add_all(attendances_grade)
         db.session.commit()
@@ -146,9 +143,9 @@ def attendance_grade_update(subject_id, attendance_id, group_id=None):
             for item in students:
                 student_id = item['id']
                 if student_id in list_sorter:
-                    form[student_id].data = (ACTIVE if list_sorter[student_id].active else IS_EXIST)
+                    form[student_id].data = (ACTIVE if list_sorter[student_id]['active'] else IS_EXIST)
                 else:
-                    form[student_id].data = (NOT_EXIST)
+                    form[student_id].data = NOT_EXIST
 
     return render_template('attendance_update.html',
                            title="Посещение предмета",
