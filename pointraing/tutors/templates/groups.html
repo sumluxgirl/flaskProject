@@ -1,3 +1,13 @@
+{% macro pageItem(name, url, is_active) -%}
+    <li class="nav-item">
+        <a class="nav-link {{ 'active' if is_active }}"
+                {% if is_active %}
+           aria-current="page"
+                {% endif %}
+           href="{{ url }}">{{ name }}</a>
+    </li>
+{%- endmacro %}
+
 {% extends "layout.html" %}
 {% block content %}
     <div class="row pt-2">
@@ -18,15 +28,15 @@
         </div>
         <div class="col-md-8">
             <ul class="nav nav-tabs justify-content-end">
-                <li class="nav-item">
-                    <a class="nav-link active" aria-current="page" href="#">Посещение</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">Защита лабораторных</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">Зачет / Экзамен</a>
-                </li>
+                {{ pageItem('Посещение',
+                        url_for('tutors.get_attendance', subject_id=subject_id, group_id=group_id),
+                        active_tab == 'attendance') }}
+                {{ pageItem('Защита лабораторных',
+                        url_for('tutors.get_labs', subject_id=subject_id, group_id=group_id),
+                        active_tab == 'labs') }}
+                {{ pageItem('Зачет / Экзамен',
+                        '#',
+                        active_tab == 'grade') }}
             </ul>
             <div class="row">
                 {% if students %}

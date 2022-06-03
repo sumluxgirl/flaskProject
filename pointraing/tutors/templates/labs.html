@@ -1,0 +1,19 @@
+{% extends "groups.html" %}
+{% block thead %}
+    {% for item in labs %}
+        <th scope="col">
+            {{ item.name }} : {{ item.deadline.strftime('%d/%m') }}
+        </th>
+    {% endfor %}
+{% endblock %}
+{% block tbody_td %}
+    {% for item_lab in labs %}
+        <td>
+            {% if item[item_lab.id] %}
+                <p>Сдано: {{ item[item_lab.id].date.strftime('%d/%m') }}</p>
+            {% else %}
+                <i class="bi bi-x-square-fill"></i>
+            {% endif %}
+        </td>
+    {% endfor %}
+{% endblock %}

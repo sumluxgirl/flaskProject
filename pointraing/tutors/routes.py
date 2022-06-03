@@ -1,12 +1,11 @@
 from flask import Blueprint, render_template, redirect, flash, url_for, request
 from flask_login import login_required
-from pointraing.models import Subject, Attendance, User, Group, AttendanceGrade
+from pointraing.models import Subject, Attendance, User, Group, AttendanceGrade, Lab, LabsGrade
 from pointraing import db
 from wtforms import SelectField
 from datetime import datetime
 from pointraing.tutors.forms import AttendanceGradeForm, CHOICES, IS_EXIST, NOT_EXIST, ACTIVE
 import uuid
-from wtforms.validators import DataRequired
 
 tutors = Blueprint('tutors', __name__, template_folder='templates', url_prefix='/tutors')
 
@@ -21,7 +20,7 @@ def subjects():
                            )
 
 
-def get_groups(subject_id, group_id=None):
+def get_main_lists(subject_id, group_id=None):
     groups = []
     for attendance in Attendance.query.filter(Attendance.subject_id == subject_id).group_by(Attendance.group_id):
         groups.append(attendance.group)
@@ -35,6 +34,20 @@ def get_groups(subject_id, group_id=None):
         flash('Выбранной группы не существует, обратитесь к администратору системы', 'warning')
         return redirect('main.home')
     students_list = current_group.users.order_by(User.surname).all()
+    return (
+        groups,
+        current_group,
+        students_list,
+        group_id
+    )
+
+
+def get_full_name(item):
+    return ' '.join([item.surname, item.name, item.patronymic])
+
+
+def get_groups(subject_id, group_id=None):
+    groups, current_group, students_list, group_id = get_main_lists(subject_id, group_id)
     attendance = current_group.attendance \
         .with_entities(Attendance.id, Attendance.date) \
         .filter(Attendance.subject_id == subject_id).order_by(Attendance.date)
@@ -46,7 +59,7 @@ def get_groups(subject_id, group_id=None):
     for item in students_list:
         student = {
             'id': item.id,
-            'name': ' '.join([item.surname, item.name, item.patronymic])
+            'name': get_full_name(item)
         }
         attendance_grade = AttendanceGrade.query \
             .filter(AttendanceGrade.user_id == item.id) \
@@ -83,7 +96,8 @@ def get_attendance(subject_id, group_id=None):
                            subject_id=subject_id,
                            group_id=group_id,
                            students=lists['students'],
-                           attendance=lists['attendance']
+                           attendance=lists['attendance'],
+                           active_tab='attendance'
                            )
 
 
@@ -153,7 +167,46 @@ def attendance_grade_update(subject_id, attendance_id, group_id=None):
                            subject_id=subject_id,
                            group_id=group_id,
                            attendance_id=attendance_id,
-                           students=students,
+                           students=lists['students'],
                            attendance=lists['attendance'],
-                           form=form
+                           form=form,
+                           active_tab='attendance'
+                           )
+
+
+@tutors.route("/subjects/<string:subject_id>/labs")
+@tutors.route("/subjects/<string:subject_id>/groups/<string:group_id>/labs")
+@login_required
+def get_labs(subject_id, group_id=None):
+    groups, current_group, students_list, group_id = get_main_lists(subject_id, group_id)
+    students = []
+    labs = Lab.query \
+        .with_entities(Lab.id, Lab.deadline, Lab.name) \
+        .filter(Lab.subject_id == subject_id).order_by(Lab.datetime)
+    lab_sq = Lab.query.with_entities(Lab.id) \
+        .filter(Attendance.subject_id == subject_id)
+    for item in students_list:
+        student = {
+            'id': item.id,
+            'name': get_full_name(item)
+        }
+        labs_grade = LabsGrade.query \
+            .filter(LabsGrade.user_id == item.id) \
+            .filter(LabsGrade.lab_id.in_(lab_sq)).all()
+        for lab_item in labs_grade:
+            student.update({
+                lab_item.lab_id: {
+                    'id': lab_item.id,
+                    'date': lab_item.date
+                }
+            })
+        students.append(student)
+    return render_template('labs.html',
+                           title="Лабораторные",
+                           groups=groups,
+                           subject_id=subject_id,
+                           group_id=group_id,
+                           students=students,
+                           labs=labs,
+                           active_tab='labs'
                            )
