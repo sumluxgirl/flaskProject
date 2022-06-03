@@ -1,7 +1,7 @@
 # flaskProject
 Point rating system USATU
 ## database scheme
-![Alt-текст](./scoring system.png)
+![Alt-текст](https://github.com/sumluxgirl/flaskProject/blob/main/scoring system.pdf)
 ## Create environment
 ```
     py -3 -m venv venv
