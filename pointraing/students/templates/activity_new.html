@@ -21,14 +21,14 @@
                 <div class="form-group">
                     {{ form.sub_type_id.label(class="form-control-label") }}
                     {% if form.sub_type_id.errors %}
-                        {{ form.sub_type_id(class="form-control form-control-lg is-invalid") }}
+                        {{ form.sub_type_id(class="form-select form-select-lg is-invalid") }}
                         <div class="invalid-feedback">
                             {% for error in form.sub_type_id.errors %}
                                 <span>{{ error }}</span>
                             {% endfor %}
                         </div>
                     {% else %}
-                        {{ form.sub_type_id(class="form-control form-control-lg") }}
+                        {{ form.sub_type_id(class="form-select form-select-lg") }}
                     {% endif %}
                 </div>
             {% endif %}

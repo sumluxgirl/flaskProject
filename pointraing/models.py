@@ -162,6 +162,8 @@ class Grade(db.Model):
     subject_id = db.Column(db.String(32), db.ForeignKey('subject.id'), nullable=False)
     date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     type_id = db.Column(db.String(32), db.ForeignKey('type_grade.id'), nullable=False)
+    type = db.relationship('TypeGrade',
+                           backref=db.backref('grade', lazy=True))
 
     def __repr__(self):
         return "Grade('{self.name}', '{self.subject_id}', '{self.type_id}')"

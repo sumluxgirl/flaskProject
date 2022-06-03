@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, redirect, flash, url_for, request
 from flask_login import login_required
-from pointraing.models import Subject, Attendance, User, Group, AttendanceGrade, Lab, LabsGrade
+from pointraing.models import Subject, Attendance, User, Group, AttendanceGrade, Lab, LabsGrade, Grade, GradeUsers
 from pointraing import db
 from wtforms import SelectField
 from datetime import datetime
@@ -217,9 +217,32 @@ def get_labs(subject_id, group_id=None):
 @login_required
 def get_grades(subject_id, group_id=None):
     groups, current_group, students_list, group_id = get_main_lists(subject_id, group_id)
+    students = []
+    grades = Grade.query \
+        .filter(Grade.subject_id == subject_id).order_by(Grade.date)
+    grades_sq = Grade.query.with_entities(Grade.id) \
+        .filter(Grade.subject_id == subject_id)
+    for item in students_list:
+        student = {
+            'id': item.id,
+            'name': get_full_name(item)
+        }
+        grade_users = GradeUsers.query \
+            .filter(GradeUsers.user_id == item.id) \
+            .filter(GradeUsers.grade_id.in_(grades_sq)).all()
+        for grade_item in grade_users:
+            student.update({
+                grade_item.grade_id: {
+                    'id': grade_item.id,
+                    'value': grade_item.value
+                }
+            })
+        students.append(student)
     return render_template('grades.html',
                            title="Зачет/Экзамен",
                            groups=groups,
+                           grades=grades,
+                           students=students,
                            subject_id=subject_id,
                            group_id=group_id,
                            active_tab='grade'

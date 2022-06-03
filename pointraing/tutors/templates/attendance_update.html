@@ -19,14 +19,14 @@
                                 {% if form[item.id].choices %}
                                     <div class="form-group">
                                         {% if form[item.id].errors %}
-                                            {{ form[item.id](class="form-control form-control-lg is-invalid") }}
+                                            {{ form[item.id](class="form-select form-select-sm is-invalid") }}
                                             <div class="invalid-feedback">
                                                 {% for error in form[item.id].errors %}
                                                     <span>{{ error }}</span>
                                                 {% endfor %}
                                             </div>
                                         {% else %}
-                                            {{ form[item.id](class="form-control form-control-lg") }}
+                                            {{ form[item.id](class="form-select form-select-sm") }}
                                         {% endif %}
                                     </div>
                                 {% endif %}
