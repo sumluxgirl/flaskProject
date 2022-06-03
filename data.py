@@ -1,6 +1,6 @@
 from pointraing import db, bcrypt
 from pointraing.models import Role, User, Group, Subject, Lab, AttendanceType, Attendance, ActivityType, \
-    ActivitySubType, RateActivity, AttendanceGrade, LabsGrade
+    ActivitySubType, RateActivity, AttendanceGrade, LabsGrade, TypeGrade, Grade
 import datetime
 import uuid
 
@@ -482,12 +482,51 @@ def create_rate_users(users, attendance, labs):
     ])
 
 
+def create_grade(subjects):
+    type_offset = TypeGrade(
+        id=create_id(),
+        name='Зачет',
+    )
+    type_exam = TypeGrade(
+        id=create_id(),
+        name='Экзамен',
+    )
+    grade_comp_network_offset = Grade(
+        id=create_id(),
+        subject_id=subjects['subject_comp_network'].id,
+        type_id=type_offset.id,
+        date=datetime.datetime(2021, 12, 20, 0, 0, 0),
+    )
+    grade_comp_network_exam = Grade(
+        id=create_id(),
+        subject_id=subjects['subject_comp_network'].id,
+        type_id=type_exam.id,
+        date=datetime.datetime(2021, 12, 21, 0, 0, 0),
+    )
+    grade_line_transmission_exam = Grade(
+        id=create_id(),
+        subject_id=subjects['subject_line_transmission'].id,
+        type_id=type_exam.id,
+        date=datetime.datetime(2021, 12, 21, 0, 0, 0),
+    )
+    grade_telecommunication_offset = Grade(
+        id=create_id(),
+        subject_id=subjects['subject_telecommunication'].id,
+        type_id=type_exam.id,
+        date=datetime.datetime(2021, 12, 20, 0, 0, 0),
+    )
+    db.session.add_all(
+        [type_offset, type_exam, grade_comp_network_offset, grade_comp_network_exam, grade_line_transmission_exam,
+         grade_telecommunication_offset])
+
+
 def create_default_values():
     db.create_all()
     users = create_users()
     subjects = create_subjects()
     labs = create_labs(subjects)
     attendance = create_attendance(subjects, users['groups'])
+    create_grade(subjects)
     activity = create_activity()
     create_rate_users(users, attendance, labs)
     db.session.commit()

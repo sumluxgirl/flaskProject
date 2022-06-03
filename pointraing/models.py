@@ -159,15 +159,22 @@ class TypeGrade(db.Model):
 
 class Grade(db.Model):
     id = db.Column(db.String(32), primary_key=True)
-    name = db.Column(db.String(60), nullable=False)
-    user_id = db.Column(db.String(32), db.ForeignKey('user.id'), nullable=False)
     subject_id = db.Column(db.String(32), db.ForeignKey('subject.id'), nullable=False)
-    value = db.Column(db.Integer, default=0)
     date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     type_id = db.Column(db.String(32), db.ForeignKey('type_grade.id'), nullable=False)
 
     def __repr__(self):
-        return "Grade('{self.name}', '{self.user_id}', '{self.value}')"
+        return "Grade('{self.name}', '{self.subject_id}', '{self.type_id}')"
+
+
+class GradeUsers(db.Model):
+    id = db.Column(db.String(32), primary_key=True)
+    user_id = db.Column(db.String(32), db.ForeignKey('user.id'), nullable=False)
+    grade_id = db.Column(db.String(32), db.ForeignKey('grade.id'), nullable=False)
+    value = db.Column(db.Integer, default=0)
+
+    def __repr__(self):
+        return "Grade('{self.grade_id}', '{self.user_id}', '{self.value}')"
 
 
 class Activity(db.Model):
