@@ -210,3 +210,17 @@ def get_labs(subject_id, group_id=None):
                            labs=labs,
                            active_tab='labs'
                            )
+
+
+@tutors.route("/subjects/<string:subject_id>/grade")
+@tutors.route("/subjects/<string:subject_id>/groups/<string:group_id>/grade")
+@login_required
+def get_grades(subject_id, group_id=None):
+    groups, current_group, students_list, group_id = get_main_lists(subject_id, group_id)
+    return render_template('grades.html',
+                           title="Зачет/Экзамен",
+                           groups=groups,
+                           subject_id=subject_id,
+                           group_id=group_id,
+                           active_tab='grade'
+                           )

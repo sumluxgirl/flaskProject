@@ -35,7 +35,7 @@
                         url_for('tutors.get_labs', subject_id=subject_id, group_id=group_id),
                         active_tab == 'labs') }}
                 {{ pageItem('Зачет / Экзамен',
-                        '#',
+                        url_for('tutors.get_grades', subject_id=subject_id, group_id=group_id),
                         active_tab == 'grade') }}
             </ul>
             <div class="row">
