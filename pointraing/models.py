@@ -173,6 +173,8 @@ class GradeUsers(db.Model):
     id = db.Column(db.String(32), primary_key=True)
     user_id = db.Column(db.String(32), db.ForeignKey('user.id'), nullable=False)
     grade_id = db.Column(db.String(32), db.ForeignKey('grade.id'), nullable=False)
+    grade = db.relationship('Grade',
+                           backref=db.backref('grade_users', lazy=True))
     value = db.Column(db.Integer, default=0)
 
     def __repr__(self):

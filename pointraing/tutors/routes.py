@@ -7,7 +7,8 @@ from datetime import datetime
 from pointraing.tutors.forms import AttendanceGradeForm, CHOICES, IS_EXIST, NOT_EXIST, ACTIVE
 import uuid
 
-tutors = Blueprint('tutors', __name__, template_folder='templates', url_prefix='/tutors')
+tutors = Blueprint('tutors', __name__, template_folder='templates', url_prefix='/tutors',
+                   static_folder='static')
 
 
 @tutors.route("/subjects")

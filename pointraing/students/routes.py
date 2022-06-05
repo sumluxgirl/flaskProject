@@ -2,8 +2,8 @@ from pointraing import db
 from flask import render_template, url_for, redirect, request, flash, abort, send_from_directory, current_app, Blueprint
 from flask_login import current_user, login_required
 from pointraing.students.forms import StudentActivityForm
-from pointraing.models import Attendance, Lab, LabsGrade, Grade, AttendanceGrade, ActivityType, ActivitySubType, \
-    RateActivity, Activity
+from pointraing.models import Attendance, Lab, LabsGrade, GradeUsers, AttendanceGrade, ActivityType, ActivitySubType, \
+    RateActivity, Activity, Grade
 import uuid
 import os
 import secrets
@@ -55,9 +55,11 @@ def education(subject_id=None):
             .filter(Lab.subject_id == subject_id) \
             .filter(LabsGrade.user_id == current_user.id) \
             .count()
-        grade = Grade.query \
-            .filter_by(user_id=current_user.id) \
-            .filter_by(subject_id=subject_id).order_by(Grade.date).all()
+        grade = GradeUsers.query\
+            .join(Grade, GradeUsers.grade) \
+            .filter(GradeUsers.user_id == current_user.id) \
+            .filter(Grade.subject_id == subject_id).all()
+
         return render_template('education.html',
                                active_tab='education',
                                right_group=subjects,

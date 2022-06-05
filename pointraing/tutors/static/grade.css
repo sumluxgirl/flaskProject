@@ -1,0 +1,6 @@
+.tutors-grade-student__change {
+    display: none;
+}
+.tutors-grade-student:hover .tutors-grade-student__change {
+    display: block;
+}
