@@ -23,6 +23,11 @@ def subjects():
 
 
 def get_main_lists(subject_id, group_id=None):
+    subject = Subject.query.get_or_404(subject_id)
+    if not subject:
+        flash('Выбранного предмета не существует, обратитесь к администратору системы', 'warning')
+        return redirect('main.home')
+    subject_name = subject.name
     groups = []
     for attendance in Attendance.query.filter(Attendance.subject_id == subject_id).group_by(Attendance.group_id):
         groups.append(attendance.group)
@@ -40,7 +45,8 @@ def get_main_lists(subject_id, group_id=None):
         groups,
         current_group,
         students_list,
-        group_id
+        group_id,
+        subject_name
     )
 
 
@@ -49,7 +55,7 @@ def get_full_name(item):
 
 
 def get_groups(subject_id, group_id=None):
-    groups, current_group, students_list, group_id = get_main_lists(subject_id, group_id)
+    groups, current_group, students_list, group_id, subject_name = get_main_lists(subject_id, group_id)
     attendance = current_group.attendance \
         .with_entities(Attendance.id, Attendance.date) \
         .filter(Attendance.subject_id == subject_id).order_by(Attendance.date)
@@ -75,30 +81,22 @@ def get_groups(subject_id, group_id=None):
             })
         students.append(student)
 
-    return {
-        'groups': groups,
-        'current_group': current_group,
-        'students': students,
-        'attendance': attendance
-    }
+    return groups, current_group, students, attendance, subject_name, group_id
 
 
 @tutors.route("/subjects/<string:subject_id>")
 @tutors.route("/subjects/<string:subject_id>/groups/<string:group_id>")
 @login_required
 def get_attendance(subject_id, group_id=None):
-    lists = get_groups(subject_id, group_id)
-    current_group = lists['current_group']
-    if not group_id:
-        group_id = current_group.id
-
+    groups, current_group, students, attendance, subject_name, group_id = get_groups(subject_id, group_id)
     return render_template('attendance.html',
                            title="Посещение предмета",
-                           groups=lists['groups'],
+                           groups=groups,
                            subject_id=subject_id,
                            group_id=group_id,
-                           students=lists['students'],
-                           attendance=lists['attendance'],
+                           students=students,
+                           attendance=attendance,
+                           subject_name=subject_name,
                            active_tab='attendance'
                            )
 
@@ -109,16 +107,11 @@ def get_attendance(subject_id, group_id=None):
 @login_required
 def attendance_grade_update(subject_id, attendance_id, group_id=None):
     current_attendance = Attendance.query.get_or_404(attendance_id)
-    is_new = (current_attendance.date - datetime.now()).total_seconds() >= 0
     if not current_attendance:
         flash('Такого посещения нет, обратитесь к администратору системы', 'warning')
         return redirect('main.home')
-    lists = get_groups(subject_id, group_id)
-    if not group_id:
-        current_group = lists['current_group']
-        group_id = current_group.id
-
-    students = lists['students']
+    is_new = (current_attendance.date - datetime.now()).total_seconds() >= 0
+    groups, current_group, students, attendance, subject_name, group_id = get_groups(subject_id, group_id)
     list_sorter = {}
     for item in students:
         field_name = item['id']
@@ -165,19 +158,20 @@ def attendance_grade_update(subject_id, attendance_id, group_id=None):
 
     return render_template('attendance_update.html',
                            title="Посещение предмета",
-                           groups=lists['groups'],
+                           groups=groups,
                            subject_id=subject_id,
                            group_id=group_id,
                            attendance_id=attendance_id,
-                           students=lists['students'],
-                           attendance=lists['attendance'],
+                           students=students,
+                           attendance=attendance,
                            form=form,
-                           active_tab='attendance'
+                           active_tab='attendance',
+                           subject_name=subject_name
                            )
 
 
 def labs_list(subject_id, group_id=None):
-    groups, current_group, students_list, group_id = get_main_lists(subject_id, group_id)
+    groups, current_group, students_list, group_id, subject_name = get_main_lists(subject_id, group_id)
     students = []
     labs = Lab.query \
         .with_entities(Lab.id, Lab.deadline, Lab.name) \
@@ -200,14 +194,14 @@ def labs_list(subject_id, group_id=None):
                 }
             })
         students.append(student)
-    return groups, group_id, students, labs
+    return groups, group_id, students, labs, subject_name
 
 
 @tutors.route("/subjects/<string:subject_id>/labs")
 @tutors.route("/subjects/<string:subject_id>/groups/<string:group_id>/labs")
 @login_required
 def get_labs(subject_id, group_id=None):
-    groups, group_id, students, labs = labs_list(subject_id, group_id)
+    groups, group_id, students, labs, subject_name = labs_list(subject_id, group_id)
     return render_template('labs.html',
                            title="Лабораторные",
                            groups=groups,
@@ -215,7 +209,8 @@ def get_labs(subject_id, group_id=None):
                            group_id=group_id,
                            students=students,
                            labs=labs,
-                           active_tab='labs'
+                           active_tab='labs',
+                           subject_name=subject_name
                            )
 
 
@@ -234,7 +229,7 @@ def update_lab_by_user(subject_id, lab_id, user_id, group_id=None):
         else:
             flash('Выбранной лабораторной работы не существует, обратитесь к администратору системы', 'warning')
         return redirect(url_for('tutors.get_labs', subject_id=subject_id, group_id=group_id))
-    groups, group_id, students, labs = labs_list(subject_id, group_id)
+    groups, group_id, students, labs, subject_name = labs_list(subject_id, group_id)
     form = LabUserForm()
     form.labs_point.choices = CHOICES_GRADE_OFFSET
     lab_user = LabsGrade.query.filter(LabsGrade.user_id == user_id).filter(LabsGrade.lab_id == lab_id).first()
@@ -268,12 +263,13 @@ def update_lab_by_user(subject_id, lab_id, user_id, group_id=None):
                            form=form,
                            lab_id=lab_id,
                            user_id=user_id,
-                           active_tab='labs'
+                           active_tab='labs',
+                           subject_name=subject_name
                            )
 
 
 def grades_lists(subject_id, group_id=None):
-    groups, current_group, students_list, group_id = get_main_lists(subject_id, group_id)
+    groups, current_group, students_list, group_id, subject_name = get_main_lists(subject_id, group_id)
     students = []
     grades = Grade.query \
         .filter(Grade.subject_id == subject_id).order_by(Grade.date)
@@ -296,14 +292,14 @@ def grades_lists(subject_id, group_id=None):
             })
         students.append(student)
 
-    return groups, grades, students, group_id
+    return groups, grades, students, group_id, subject_name
 
 
 @tutors.route("/subjects/<string:subject_id>/grade")
 @tutors.route("/subjects/<string:subject_id>/groups/<string:group_id>/grade")
 @login_required
 def get_grades(subject_id, group_id=None):
-    groups, grades, students, group_id = grades_lists(subject_id, group_id)
+    groups, grades, students, group_id, subject_name = grades_lists(subject_id, group_id)
     return render_template('grades.html',
                            title="Зачет/Экзамен",
                            groups=groups,
@@ -311,7 +307,8 @@ def get_grades(subject_id, group_id=None):
                            students=students,
                            subject_id=subject_id,
                            group_id=group_id,
-                           active_tab='grade'
+                           active_tab='grade',
+                           subject_name=subject_name
                            )
 
 
@@ -330,7 +327,7 @@ def update_grade_by_user(subject_id, grade_id, user_id, group_id=None):
         else:
             flash('Выбранного типа оценивания не существует, обратитесь к администратору системы', 'warning')
         return redirect(url_for('tutors.get_grades', subject_id=subject_id, group_id=group_id))
-    groups, grades, students, group_id = grades_lists(subject_id, group_id)
+    groups, grades, students, group_id, subject_name = grades_lists(subject_id, group_id)
     grade_user = GradeUsers.query.filter(GradeUsers.grade_id == grade_id) \
         .filter(GradeUsers.user_id == user_id).first()
     form = GradeUserForm()
@@ -368,5 +365,6 @@ def update_grade_by_user(subject_id, grade_id, user_id, group_id=None):
                            user_id=user_id,
                            group_id=group_id,
                            form=form,
-                           active_tab='grade'
+                           active_tab='grade',
+                           subject_name=subject_name
                            )
