@@ -11,15 +11,23 @@ CHOICES = [
     (ACTIVE, 'Активность')
 ]
 
+CHOICES_GRADE_EXAM = [
+    (0, '-'),
+    (2, 'Неудовлетворительно'),
+    (3, 'Удовлетворительно'),
+    (4, 'Хорошо'),
+    (5, 'Отлично')
+]
+
+CHOICES_GRADE_OFFSET = [
+    (0, 'Не сдано'),
+    (1, 'Сдано')
+]
+
 
 class AttendanceGradeForm(FlaskForm):
     submit = SubmitField('Сохранить')
 
 
 class GradeUserForm(FlaskForm):
-    grades_point = SelectField('Оценка', choices=[
-        (2, 'Неудовлетворительно'),
-        (3, 'Удовлетворительно'),
-        (4, 'Хорошо'),
-        (5, 'Отлично')
-    ], coerce=int)
+    grades_point = SelectField('Оценка', coerce=int)

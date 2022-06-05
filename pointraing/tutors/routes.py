@@ -4,7 +4,8 @@ from pointraing.models import Subject, Attendance, User, Group, AttendanceGrade,
 from pointraing import db
 from wtforms import SelectField
 from datetime import datetime
-from pointraing.tutors.forms import AttendanceGradeForm, CHOICES, IS_EXIST, NOT_EXIST, ACTIVE, GradeUserForm
+from pointraing.tutors.forms import AttendanceGradeForm, CHOICES, IS_EXIST, NOT_EXIST, ACTIVE, GradeUserForm, \
+    CHOICES_GRADE_EXAM, CHOICES_GRADE_OFFSET
 import uuid
 
 tutors = Blueprint('tutors', __name__, template_folder='templates', url_prefix='/tutors',
@@ -275,19 +276,26 @@ def update_grade_by_user(subject_id, grade_id, user_id, group_id=None):
     grade_user = GradeUsers.query.filter(GradeUsers.grade_id == grade_id) \
         .filter(GradeUsers.user_id == user_id).first()
     form = GradeUserForm()
+    is_exam = grade.type.name == 'Экзамен'
+    form.grades_point.choices = CHOICES_GRADE_EXAM if is_exam else CHOICES_GRADE_OFFSET
     if form.validate_on_submit():
-        if not grade_user:
-            db.session.add(
-                GradeUsers(
-                    id=uuid.uuid4().hex,
-                    user_id=user_id,
-                    grade_id=grade_id,
-                    value=form.grades_point.data
-                )
-            )
+        if form.grades_point.data == 0:
+            if grade_user:
+                db.session.delete(grade_user)
+                db.session.commit()
         else:
-            grade_user.value = form.grades_point.data
-        db.session.commit()
+            if not grade_user:
+                db.session.add(
+                    GradeUsers(
+                        id=uuid.uuid4().hex,
+                        user_id=user_id,
+                        grade_id=grade_id,
+                        value=form.grades_point.data
+                    )
+                )
+            else:
+                grade_user.value = form.grades_point.data
+            db.session.commit()
         flash('Оценка обновлена!', 'success')
         return redirect(url_for('tutors.get_grades', subject_id=subject_id, group_id=group_id))
     elif request.method == 'GET':
