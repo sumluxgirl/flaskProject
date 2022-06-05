@@ -1,4 +1,7 @@
 {% extends "groups.html" %}
+{% block stylesheet %}
+    <link rel="stylesheet" type="text/css" href="{{ url_for('tutors.static', filename='grade.css') }}">
+{% endblock %}
 {% block thead %}
     {% for item in labs %}
         <th scope="col">
@@ -8,11 +11,36 @@
 {% endblock %}
 {% block tbody_td %}
     {% for item_lab in labs %}
-        <td>
-            {% if item[item_lab.id] %}
-                <p>Сдано: {{ item[item_lab.id].date.strftime('%d/%m') }}</p>
+        <td class="tutors-grade-student">
+        {% if lab_id == item_lab.id and user_id == item.id %}
+                {% if form.labs_point.choices %}
+                    <form method="POST" action="" class="d-flex justify-content-start">
+                        {{ form.hidden_tag() }}
+                        <div class="mt-1">
+                            {% if form.labs_point.errors %}
+                                {{ form.labs_point(class="form-select form-select-sm is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.labs_point.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.labs_point(class="form-select form-select-sm") }}
+                            {% endif %}
+
+                        </div>
+                        <button type="submit" class="btn btn-outline-info mx-2">
+                            <i class="bi bi-send-fill"></i>
+                        </button>
+                    </form>
+                {% endif %}
+            {% elif item[item_lab.id] %}
+                <a href="{{ url_for('tutors.update_lab_by_user', subject_id=subject_id, lab_id=item_lab.id,
+                 user_id=item.id, group_id=group_id) }}">Сдано: {{ item[item_lab.id].date.strftime('%d/%m') }}</a>
             {% else %}
-                <i class="bi bi-x-square-fill"></i>
+                <a class="tutors-grade-student__change"
+                   href="{{ url_for('tutors.update_lab_by_user', subject_id=subject_id, lab_id=item_lab.id,
+                   user_id=item.id, group_id=group_id) }}">Изменить</a>
             {% endif %}
         </td>
     {% endfor %}

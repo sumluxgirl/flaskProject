@@ -5,7 +5,7 @@ from pointraing import db
 from wtforms import SelectField
 from datetime import datetime
 from pointraing.tutors.forms import AttendanceGradeForm, CHOICES, IS_EXIST, NOT_EXIST, ACTIVE, GradeUserForm, \
-    CHOICES_GRADE_EXAM, CHOICES_GRADE_OFFSET
+    CHOICES_GRADE_EXAM, CHOICES_GRADE_OFFSET, LabUserForm
 import uuid
 
 tutors = Blueprint('tutors', __name__, template_folder='templates', url_prefix='/tutors',
@@ -176,10 +176,7 @@ def attendance_grade_update(subject_id, attendance_id, group_id=None):
                            )
 
 
-@tutors.route("/subjects/<string:subject_id>/labs")
-@tutors.route("/subjects/<string:subject_id>/groups/<string:group_id>/labs")
-@login_required
-def get_labs(subject_id, group_id=None):
+def labs_list(subject_id, group_id=None):
     groups, current_group, students_list, group_id = get_main_lists(subject_id, group_id)
     students = []
     labs = Lab.query \
@@ -203,6 +200,14 @@ def get_labs(subject_id, group_id=None):
                 }
             })
         students.append(student)
+    return groups, group_id, students, labs
+
+
+@tutors.route("/subjects/<string:subject_id>/labs")
+@tutors.route("/subjects/<string:subject_id>/groups/<string:group_id>/labs")
+@login_required
+def get_labs(subject_id, group_id=None):
+    groups, group_id, students, labs = labs_list(subject_id, group_id)
     return render_template('labs.html',
                            title="Лабораторные",
                            groups=groups,
@@ -210,6 +215,59 @@ def get_labs(subject_id, group_id=None):
                            group_id=group_id,
                            students=students,
                            labs=labs,
+                           active_tab='labs'
+                           )
+
+
+@tutors.route("/subjects/<string:subject_id>/labs/<string:lab_id>/user/<string:user_id>/update",
+              methods=['GET', 'POST'])
+@tutors.route(
+    "/subjects/<string:subject_id>/groups/<string:group_id>/labs/<string:lab_id>/user/<string:user_id>/update",
+    methods=['GET', 'POST'])
+@login_required
+def update_lab_by_user(subject_id, lab_id, user_id, group_id=None):
+    user = User.query.get_or_404(user_id)
+    lab = Lab.query.get_or_404(lab_id)
+    if not user or not lab:
+        if not user:
+            flash('Выбранного пользователя не существует, обратитесь к администратору системы', 'warning')
+        else:
+            flash('Выбранной лабораторной работы не существует, обратитесь к администратору системы', 'warning')
+        return redirect(url_for('tutors.get_labs', subject_id=subject_id, group_id=group_id))
+    groups, group_id, students, labs = labs_list(subject_id, group_id)
+    form = LabUserForm()
+    form.labs_point.choices = CHOICES_GRADE_OFFSET
+    lab_user = LabsGrade.query.filter(LabsGrade.user_id == user_id).filter(LabsGrade.lab_id == lab_id).first()
+    if form.validate_on_submit():
+        if form.labs_point.data == 0:
+            if lab_user:
+                db.session.delete(lab_user)
+                db.session.commit()
+        else:
+            if not lab_user:
+                db.session.add(
+                    LabsGrade(
+                        id=uuid.uuid4().hex,
+                        user_id=user_id,
+                        lab_id=lab_id,
+                        date=datetime.now()
+                    )
+                )
+                db.session.commit()
+        flash('Оценка лабораторной работы обновлена!', 'success')
+        return redirect(url_for('tutors.get_labs', subject_id=subject_id, group_id=group_id))
+    elif request.method == 'GET':
+        form.labs_point.data = 1 if lab_user else 0
+    return render_template('labs.html',
+                           title="Лабораторные",
+                           groups=groups,
+                           subject_id=subject_id,
+                           group_id=group_id,
+                           students=students,
+                           labs=labs,
+                           form=form,
+                           lab_id=lab_id,
+                           user_id=user_id,
                            active_tab='labs'
                            )
 
@@ -238,7 +296,7 @@ def grades_lists(subject_id, group_id=None):
             })
         students.append(student)
 
-    return (groups, grades, students, group_id)
+    return groups, grades, students, group_id
 
 
 @tutors.route("/subjects/<string:subject_id>/grade")

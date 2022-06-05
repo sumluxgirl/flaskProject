@@ -31,3 +31,7 @@ class AttendanceGradeForm(FlaskForm):
 
 class GradeUserForm(FlaskForm):
     grades_point = SelectField('Оценка', coerce=int)
+
+
+class LabUserForm(FlaskForm):
+    labs_point = SelectField('Оценка', coerce=int)
