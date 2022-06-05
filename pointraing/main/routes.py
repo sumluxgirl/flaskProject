@@ -13,6 +13,8 @@ def home():
         return redirect(url_for('students.education'))
     elif current_user.role.name == 'Преподаватель':
         return redirect(url_for('tutors.subjects'))
+    elif current_user.role.name == 'Деканат':
+        return redirect(url_for('dean_office.rating'))
     return render_template('home.html')
 
 
