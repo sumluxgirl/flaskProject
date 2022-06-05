@@ -4,7 +4,7 @@ from pointraing.models import Subject, Attendance, User, Group, AttendanceGrade,
 from pointraing import db
 from wtforms import SelectField
 from datetime import datetime
-from pointraing.tutors.forms import AttendanceGradeForm, CHOICES, IS_EXIST, NOT_EXIST, ACTIVE
+from pointraing.tutors.forms import AttendanceGradeForm, CHOICES, IS_EXIST, NOT_EXIST, ACTIVE, GradeUserForm
 import uuid
 
 tutors = Blueprint('tutors', __name__, template_folder='templates', url_prefix='/tutors',
@@ -213,10 +213,7 @@ def get_labs(subject_id, group_id=None):
                            )
 
 
-@tutors.route("/subjects/<string:subject_id>/grade")
-@tutors.route("/subjects/<string:subject_id>/groups/<string:group_id>/grade")
-@login_required
-def get_grades(subject_id, group_id=None):
+def grades_lists(subject_id, group_id=None):
     groups, current_group, students_list, group_id = get_main_lists(subject_id, group_id)
     students = []
     grades = Grade.query \
@@ -239,6 +236,15 @@ def get_grades(subject_id, group_id=None):
                 }
             })
         students.append(student)
+
+    return (groups, grades, students, group_id)
+
+
+@tutors.route("/subjects/<string:subject_id>/grade")
+@tutors.route("/subjects/<string:subject_id>/groups/<string:group_id>/grade")
+@login_required
+def get_grades(subject_id, group_id=None):
+    groups, grades, students, group_id = grades_lists(subject_id, group_id)
     return render_template('grades.html',
                            title="Зачет/Экзамен",
                            groups=groups,
@@ -246,5 +252,55 @@ def get_grades(subject_id, group_id=None):
                            students=students,
                            subject_id=subject_id,
                            group_id=group_id,
+                           active_tab='grade'
+                           )
+
+
+@tutors.route("/subjects/<string:subject_id>/grade/<string:grade_id>/user/<string:user_id>/update",
+              methods=['GET', 'POST'])
+@tutors.route(
+    "/subjects/<string:subject_id>/groups/<string:group_id>/grade/<string:grade_id>/user/<string:user_id>/update",
+    methods=['GET', 'POST'])
+@login_required
+def update_grade_by_user(subject_id, grade_id, user_id, group_id=None):
+    user = User.query.get_or_404(user_id)
+    grade = Grade.query.get_or_404(grade_id)
+    if not user or not grade:
+        if not user:
+            flash('Выбранного пользователя не существует, обратитесь к администратору системы', 'warning')
+        else:
+            flash('Выбранного типа оценивания не существует, обратитесь к администратору системы', 'warning')
+        return redirect(url_for('tutors.get_grades', subject_id=subject_id, group_id=group_id))
+    groups, grades, students, group_id = grades_lists(subject_id, group_id)
+    grade_user = GradeUsers.query.filter(GradeUsers.grade_id == grade_id) \
+        .filter(GradeUsers.user_id == user_id).first()
+    form = GradeUserForm()
+    if form.validate_on_submit():
+        if not grade_user:
+            db.session.add(
+                GradeUsers(
+                    id=uuid.uuid4().hex,
+                    user_id=user_id,
+                    grade_id=grade_id,
+                    value=form.grades_point.data
+                )
+            )
+        else:
+            grade_user.value = form.grades_point.data
+        db.session.commit()
+        flash('Оценка обновлена!', 'success')
+        return redirect(url_for('tutors.get_grades', subject_id=subject_id, group_id=group_id))
+    elif request.method == 'GET':
+        form.grades_point.data = grade_user.value if grade_user else 0
+    return render_template('grades.html',
+                           title="Зачет/Экзамен",
+                           groups=groups,
+                           grades=grades,
+                           students=students,
+                           subject_id=subject_id,
+                           grade_id=grade_id,
+                           user_id=user_id,
+                           group_id=group_id,
+                           form=form,
                            active_tab='grade'
                            )
