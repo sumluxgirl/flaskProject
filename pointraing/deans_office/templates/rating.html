@@ -1,16 +1,8 @@
-{% macro pageItem(name, url, is_active) -%}
-    <li class="nav-item">
-        <a class="nav-link {{ 'active' if is_active }}"
-                {% if is_active %}
-           aria-current="page"
-                {% endif %}
-           href="{{ url }}">{{ name }}</a>
-    </li>
-{%- endmacro %}
 {% macro badgeItem(count, max_count) -%}
     <span class="badge bg-secondary rounded-pill mx-1">{{ count }}/{{ max_count }}</span>
 {%- endmacro %}
 {% from 'card.html' import card %}
+{% from 'macros.html' import pageItem %}
 
 {% extends "layout.html" %}
 {% block content %}

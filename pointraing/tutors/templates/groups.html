@@ -1,13 +1,4 @@
-{% macro pageItem(name, url, is_active) -%}
-    <li class="nav-item">
-        <a class="nav-link {{ 'active' if is_active }}"
-                {% if is_active %}
-           aria-current="page"
-                {% endif %}
-           href="{{ url }}">{{ name }}</a>
-    </li>
-{%- endmacro %}
-
+{% from 'macros.html' import pageItem %}
 {% extends "layout.html" %}
 {% block content %}
     <nav aria-label="breadcrumb pt-1">

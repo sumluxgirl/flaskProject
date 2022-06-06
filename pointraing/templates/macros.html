@@ -1,0 +1,9 @@
+{% macro pageItem(name, url, is_active) -%}
+    <li class="nav-item">
+        <a class="nav-link {{ 'active' if is_active }}"
+                {% if is_active %}
+           aria-current="page"
+                {% endif %}
+           href="{{ url }}">{{ name }}</a>
+    </li>
+{%- endmacro %}
