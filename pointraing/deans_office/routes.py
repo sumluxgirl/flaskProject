@@ -1,7 +1,9 @@
-from flask import Blueprint, render_template, flash, redirect
+from flask import Blueprint, render_template, flash, redirect, url_for
 from flask_login import current_user, login_required
 from pointraing.models import Group, User, Subject, Attendance, Activity
 from pointraing.main.routes import get_full_name
+from pointraing import db
+from pointraing.deans_office.forms import DeclineActivityForm
 
 deans_office = Blueprint('deans_office', __name__, template_folder='templates')
 
@@ -47,7 +49,7 @@ def rating(group_id=None, student_id=None):
     subjects = []
     for i in attendance_subjects:
         subjects.append(i.subject)
-    activity_by_user = Activity.query.filter(Activity.user_id == student_id).order_by(Activity.status)
+    activity_by_user = Activity.query.filter(Activity.user_id == student_id).order_by(Activity.status).all()
     return render_template('rating.html',
                            title='Рейтинг УГАТУ',
                            group_id=group_id,
@@ -58,3 +60,37 @@ def rating(group_id=None, student_id=None):
                            activity_by_user=activity_by_user,
                            active_tab='rating'
                            )
+
+
+@deans_office.route('/activity/<string:activity_id>/group/<string:group_id>/student/<string:student_id>')
+@login_required
+def activity_accept(activity_id, group_id, student_id):
+    activity = Activity.query.get_or_404(activity_id)
+    if not activity:
+        flash('Выбранной активной деяотельности не существует, обратитесь к администратору системы', 'warning')
+        return redirect('main.home')
+    activity.status = True
+    db.session.commit()
+    flash('Активность обновлена!', 'success')
+    return redirect(url_for('deans_office.rating', group_id=group_id, student_id=student_id))
+
+
+@deans_office.route('/activity/<string:activity_id>/group/<string:group_id>/student/<string:student_id>/decline',
+                    methods=['GET', 'POST'])
+@login_required
+def activity_decline(activity_id, group_id, student_id):
+    activity = Activity.query.get_or_404(activity_id)
+    if not activity:
+        flash('Выбранной активной деяотельности не существует, обратитесь к администратору системы', 'warning')
+        return redirect('main.home')
+    form = DeclineActivityForm()
+    if form.validate_on_submit():
+        activity.status = False
+        activity.comment = form.comment.data
+        db.session.commit()
+        flash('Активность обновлена!', 'success')
+        return redirect(url_for('deans_office.rating', group_id=group_id, student_id=student_id))
+    # return render_template('main.home')
+    return redirect('main.home')
+
+
