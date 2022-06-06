@@ -7,6 +7,7 @@ from datetime import datetime
 from pointraing.tutors.forms import AttendanceGradeForm, CHOICES, IS_EXIST, NOT_EXIST, ACTIVE, GradeUserForm, \
     CHOICES_GRADE_EXAM, CHOICES_GRADE_OFFSET, LabUserForm
 import uuid
+from pointraing.main.routes import get_full_name
 
 tutors = Blueprint('tutors', __name__, template_folder='templates', url_prefix='/tutors',
                    static_folder='static')
@@ -48,10 +49,6 @@ def get_main_lists(subject_id, group_id=None):
         group_id,
         subject_name
     )
-
-
-def get_full_name(item):
-    return ' '.join([item.surname, item.name, item.patronymic])
 
 
 def get_groups(subject_id, group_id=None):

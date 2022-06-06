@@ -24,10 +24,10 @@ def create_app():
     from pointraing.users.routes import users
     from pointraing.students.routes import students
     from pointraing.tutors.routes import tutors
-    from pointraing.deans_office.routes import dean_office
+    from pointraing.deans_office.routes import deans_office
     app.register_blueprint(main)
     app.register_blueprint(users)
     app.register_blueprint(students)
     app.register_blueprint(tutors)
-    app.register_blueprint(dean_office)
+    app.register_blueprint(deans_office)
     return app

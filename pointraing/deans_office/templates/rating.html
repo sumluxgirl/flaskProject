@@ -1,4 +1,138 @@
+{% macro pageItem(name, url, is_active) -%}
+    <li class="nav-item">
+        <a class="nav-link {{ 'active' if is_active }}"
+                {% if is_active %}
+           aria-current="page"
+                {% endif %}
+           href="{{ url }}">{{ name }}</a>
+    </li>
+{%- endmacro %}
+{% macro badgeItem(count, max_count) -%}
+    <span class="badge bg-secondary rounded-pill mx-1">{{ count }}/{{ max_count }}</span>
+{%- endmacro %}
+{% macro cardItem(name, value, classValue) -%}
+    <div class="d-inline-flex w-100 py-1">
+        <div class="fw-bold pe-lg-1">
+            {{ name }}
+        </div>
+        <div class="{{ classValue if classValue }}">{{ value }}</div>
+    </div>
+{%- endmacro %}
+
 {% extends "layout.html" %}
 {% block content %}
-    РЕйтинг
+<div class="row pt-2">
+    <div class="col-md-2">
+        {% for item in groups %}
+            <div class="list-group list-group-flush">
+                {% if item.id == group_id %}
+                    <a href="{{ url_for('deans_office.rating', group_id=item.id) }}"
+                       class="list-group-item list-group-item-action active" aria-current="true">
+                {% else %}
+                    <a href="{{ url_for('deans_office.rating', group_id=item.id) }}"
+                       class="list-group-item list-group-item-action">
+                {% endif %}
+                {{ item.name }}
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+    <div class="col-md-10">
+        <ul class="nav nav-tabs justify-content-end">
+            {{ pageItem('Рейтинг',
+                        url_for('deans_office.rating', group_id=group_id),
+                        active_tab == 'rating') }}
+            {{ pageItem('Активность',
+                        '#',
+                        active_tab == 'active') }}
+        </ul>
+        <div class="row">
+            {% if students %}
+            <div class="col-md-4">
+                {% for item in students %}
+                    <div class="list-group list-group-flush">
+                        {% if item.id == student_id %}
+                            <a href="{{ url_for('deans_office.rating', student_id=item.id, group_id=group_id) }}"
+                               class="list-group-item list-group-item-action active fw-bold"
+                               aria-current="true">
+                        {% else %}
+                            <a href="{{ url_for('deans_office.rating', student_id=item.id, group_id=group_id) }}"
+                               class="list-group-item list-group-item-action fw-bold">
+                        {% endif %}
+                        {{ item.name }}<span class="badge rounded-pill bg-danger mx-1">N</span>
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="col-md-8">
+                <h5 class="my-2">Предметы {{ badgeItem('n', 'm') }}</h5>
+                <div class="accordion my-2" id="accordionPanelsStayOpenExample">
+                    {% for item in subjects %}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading-{{ item.id }}">
+                                <button class="accordion-button collapsed" type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#collapse-{{ item.id }}" aria-expanded="false"
+                                        aria-controls="collapse-{{ item.id }}">
+                                    {{ item.name }} {{ badgeItem('n', 'm') }}
+                                </button>
+                            </h2>
+                            <div id="collapse-{{ item.id }}" class="accordion-collapse collapse"
+                                 aria-labelledby="heading-{{ item.id }}">
+                                <div class="accordion-body">
+                                    <ul>
+                                        <li>Посещение {{ badgeItem('n', 'm') }}</li>
+                                        <li>Лабораторные работы {{ badgeItem('n', 'm') }}</li>
+                                        <li>Экзамен {{ badgeItem('n', 'm') }}</li>
+                                    </ul>
+                                    <a class="btn btn-outline-info" href="#" role="button">Подробнее</a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <h5 class="my-2">Активность <span class="badge bg-secondary rounded-pill mx-1">m/n</span></h5>
+                {% for item in activity_by_user %}
+                <div class="card mt-2">
+                    <div class="card-header fw-bold">
+                        {{ item.name }}
+                    </div>
+                    <div class="card-body">
+                        <div class="card-text">
+                            {% set file_link %}
+                            <a href="{{ url_for('main.download_file', name=item.file) }}"
+                               download="">
+                                {{ item.file }}
+                            </a>
+                            {% endset %}
+                            {{ cardItem('Файл:', file_link) }}
+                            {{ cardItem('Баллы:', item.rate.value) }}
+                            {% if item.rate.sub_type %}
+                                {{ cardItem('Тип:', item.rate.sub_type.name) }}
+                            {% endif %}
+                            {% if item.comment %}
+                                {{ cardItem('Комментарий:', item.comment) }}
+                            {% endif %}
+                            {% if item.status == True %}
+                                {{ cardItem('Статус:', 'Принято', 'text-success') }}
+                            {% elif item.status == False %}
+                                {{ cardItem('Статус:', 'Отклонено', 'text-danger') }}
+                            {% else %}
+                                {{ cardItem('Статус:', 'На рассмотрении') }}
+                                <a href="#"
+                                   class="btn btn-outline-primary">Принять</a>
+                                <a href="#"
+                                   class="btn btn-outline-danger">Отклонить</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted">Данных пока нет, обратитесь к администратору системы</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
 {% endblock %}
