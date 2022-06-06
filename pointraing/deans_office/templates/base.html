@@ -1,0 +1,16 @@
+{% from 'macros.html' import pageItem%}
+
+{% extends "layout.html" %}
+{% block content %}
+    <div class="row pt-2">
+        <ul class="nav nav-tabs justify-content-end">
+            {{ pageItem('Рейтинг',
+                        url_for('deans_office.rating', group_id=group_id),
+                        active_tab == 'rating') }}
+            {{ pageItem('Администрирование',
+                        url_for('deans_office.admin'),
+                        active_tab == 'admin') }}
+        </ul>
+        {% block tab_content %}{% endblock %}
+    </div>
+{% endblock %}

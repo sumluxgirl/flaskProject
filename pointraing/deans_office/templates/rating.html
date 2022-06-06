@@ -2,89 +2,79 @@
     <span class="badge bg-secondary rounded-pill mx-1">{{ count }}/{{ max_count }}</span>
 {%- endmacro %}
 {% from 'card.html' import card %}
-{% from 'macros.html' import pageItem, listItem %}
+{% from 'macros.html' import listItem %}
 
-{% extends "layout.html" %}
-{% block content %}
-<div class="row pt-2">
-    <ul class="nav nav-tabs justify-content-end">
-        {{ pageItem('Рейтинг',
-                        url_for('deans_office.rating', group_id=group_id),
-                        active_tab == 'rating') }}
-        {{ pageItem('Администрирование',
-                        url_for('deans_office.admin'),
-                        active_tab == 'admin') }}
-    </ul>
-    <div class="col-md-2">
-        {% for item in groups %}
-            {{ listItem(item.name, url_for('deans_office.rating', group_id=item.id), item.id == group_id) }}
-        {% endfor %}
-    </div>
-    <div class="col-md-10">
-        <div class="row">
-            {% if students %}
-            <div class="col-md-4">
-                {% for item in students %}
-                    <div class="list-group list-group-flush">
-                        {% if item.id == student_id %}
-                            <a href="{{ url_for('deans_office.rating', student_id=item.id, group_id=group_id) }}"
-                               class="list-group-item list-group-item-action active fw-bold"
-                               aria-current="true">
-                        {% else %}
-                            <a href="{{ url_for('deans_office.rating', student_id=item.id, group_id=group_id) }}"
-                               class="list-group-item list-group-item-action fw-bold">
-                        {% endif %}
-                        {{ item.name }}<span class="badge rounded-pill bg-danger mx-1">N</span>
-                        </a>
+{% extends "base.html" %}
+{% block tab_content %}
+<div class="col-md-2">
+    {% for item in groups %}
+        {{ listItem(item.name, url_for('deans_office.rating', group_id=item.id), item.id == group_id) }}
+    {% endfor %}
+</div>
+<div class="col-md-10">
+    <div class="row">
+        {% if students %}
+        <div class="col-md-4">
+            {% for item in students %}
+                <div class="list-group list-group-flush">
+                    {% if item.id == student_id %}
+                        <a href="{{ url_for('deans_office.rating', student_id=item.id, group_id=group_id) }}"
+                           class="list-group-item list-group-item-action active fw-bold"
+                           aria-current="true">
+                    {% else %}
+                        <a href="{{ url_for('deans_office.rating', student_id=item.id, group_id=group_id) }}"
+                           class="list-group-item list-group-item-action fw-bold">
+                    {% endif %}
+                    {{ item.name }}<span class="badge rounded-pill bg-danger mx-1">N</span>
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="col-md-8">
+            <h5 class="my-2">Предметы {{ badgeItem('n', 'm') }}</h5>
+            <div class="accordion my-2" id="accordionPanelsStayOpenExample">
+                {% for item in subjects %}
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading-{{ item.id }}">
+                            <button class="accordion-button collapsed" type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#collapse-{{ item.id }}" aria-expanded="false"
+                                    aria-controls="collapse-{{ item.id }}">
+                                {{ item.name }} {{ badgeItem('n', 'm') }}
+                            </button>
+                        </h2>
+                        <div id="collapse-{{ item.id }}" class="accordion-collapse collapse"
+                             aria-labelledby="heading-{{ item.id }}">
+                            <div class="accordion-body">
+                                <ul>
+                                    <li>Посещение {{ badgeItem('n', 'm') }}</li>
+                                    <li>Лабораторные работы {{ badgeItem('n', 'm') }}</li>
+                                    <li>Экзамен {{ badgeItem('n', 'm') }}</li>
+                                </ul>
+                                <a class="btn btn-outline-info" href="#" role="button">Подробнее</a>
+                            </div>
+                        </div>
                     </div>
                 {% endfor %}
             </div>
-            <div class="col-md-8">
-                <h5 class="my-2">Предметы {{ badgeItem('n', 'm') }}</h5>
-                <div class="accordion my-2" id="accordionPanelsStayOpenExample">
-                    {% for item in subjects %}
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="heading-{{ item.id }}">
-                                <button class="accordion-button collapsed" type="button"
-                                        data-bs-toggle="collapse"
-                                        data-bs-target="#collapse-{{ item.id }}" aria-expanded="false"
-                                        aria-controls="collapse-{{ item.id }}">
-                                    {{ item.name }} {{ badgeItem('n', 'm') }}
-                                </button>
-                            </h2>
-                            <div id="collapse-{{ item.id }}" class="accordion-collapse collapse"
-                                 aria-labelledby="heading-{{ item.id }}">
-                                <div class="accordion-body">
-                                    <ul>
-                                        <li>Посещение {{ badgeItem('n', 'm') }}</li>
-                                        <li>Лабораторные работы {{ badgeItem('n', 'm') }}</li>
-                                        <li>Экзамен {{ badgeItem('n', 'm') }}</li>
-                                    </ul>
-                                    <a class="btn btn-outline-info" href="#" role="button">Подробнее</a>
-                                </div>
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-                <h5 class="my-2">Активность <span class="badge bg-secondary rounded-pill mx-1">m/n</span></h5>
-                {% if activity_by_user %}
-                {% for item in activity_by_user %}
-                {% set buttons %}
-                <a href="{{ url_for('deans_office.activity_accept', activity_id=item.id, group_id=group_id, student_id=student_id) }}"
-                   class="btn btn-outline-primary">Принять</a>
-                <a href="{{ url_for('deans_office.activity_decline', activity_id=item.id, group_id=group_id, student_id=student_id) }}"
-                   class="btn btn-outline-danger">Отклонить</a>
-                {% endset %}
-                {{ card(item, buttons) }}
-                {% endfor %}
-                {% else %}
-                <p class="text-muted">Данных по активной деятельности не существует</p>
-                {% endif %}
-            </div>
+            <h5 class="my-2">Активность <span class="badge bg-secondary rounded-pill mx-1">m/n</span></h5>
+            {% if activity_by_user %}
+            {% for item in activity_by_user %}
+            {% set buttons %}
+            <a href="{{ url_for('deans_office.activity_accept', activity_id=item.id, group_id=group_id, student_id=student_id) }}"
+               class="btn btn-outline-primary">Принять</a>
+            <a href="{{ url_for('deans_office.activity_decline', activity_id=item.id, group_id=group_id, student_id=student_id) }}"
+               class="btn btn-outline-danger">Отклонить</a>
+            {% endset %}
+            {{ card(item, buttons) }}
+            {% endfor %}
             {% else %}
-            <p class="text-muted">Данных пока нет, обратитесь к администратору системы</p>
+            <p class="text-muted">Данных по активной деятельности не существует</p>
             {% endif %}
         </div>
+        {% else %}
+        <p class="text-muted">Данных пока нет, обратитесь к администратору системы</p>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

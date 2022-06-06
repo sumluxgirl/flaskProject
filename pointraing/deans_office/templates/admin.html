@@ -1,8 +1,12 @@
-{% extends "layout.html" %}
-{% block content %}
-    <ul>
-        <li>
-            <a href="#">Предметы</a>
-        </li>
-    </ul>
+{% from 'macros.html' import listItem %}
+{% extends "base.html" %}
+{% block tab_content %}
+    <div class="col-md-2">
+        {% for item in groups %}
+            {{ listItem(item.name, url_for('deans_office.admin', entity=item.id), item.id == entity) }}
+        {% endfor %}
+    </div>
+    <div class="col-md-10">
+
+    </div>
 {% endblock %}

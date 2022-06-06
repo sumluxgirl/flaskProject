@@ -106,7 +106,63 @@ def activity_decline(activity_id, group_id, student_id):
 
 
 @deans_office.route('/admin')
+@deans_office.route('/admin/<string:entity>')
 @login_required
-def admin():
-    return render_template('admin.html')
+def admin(entity=None):
+    groups = [{
+        'name': 'Предметы',
+        'url': '#',
+        'id': 'subject'
+    }, {
+        'name': 'Лабораторные работы',
+        'url': '#',
+        'id': 'lab'
+    }, {
+        'name': 'Рассписание',
+        'url': '#',
+        'id': 'attendance'
+    }, {
+        'name': 'Типы посешений',
+        'url': '#',
+        'id': 'attendance_type'
+    }, {
+        'name': 'Оценки',
+        'url': '#',
+        'id': 'grade'
+    }, {
+        'name': 'Типы оценок',
+        'url': '#',
+        'id': 'type_grade'
+    }, {
+        'name': 'Группы',
+        'url': '#',
+        'id': 'group'
+    }, {
+        'name': 'Роли',
+        'url': '#',
+        'id': 'role'
+    }, {
+        'name': 'Пользователи',
+        'url': '#',
+        'id': 'user'
+    }, {
+        'name': 'Типы активности',
+        'url': '#',
+        'id': 'activity_type'
+    }, {
+        'name': 'Подтипы активности',
+        'url': '#',
+        'id': 'activity_sub_type'
+    }, {
+        'name': 'Рейтинг активности',
+        'url': '#',
+        'id': 'rate_activity'
+    }]
+    if not entity:
+        entity = groups[0]['id']
+    return render_template('admin.html',
+                           title='Администрирование',
+                           entity=entity,
+                           groups=groups,
+                           active_tab='admin')
 
