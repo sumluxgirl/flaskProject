@@ -10,14 +10,7 @@
 {% macro badgeItem(count, max_count) -%}
     <span class="badge bg-secondary rounded-pill mx-1">{{ count }}/{{ max_count }}</span>
 {%- endmacro %}
-{% macro cardItem(name, value, classValue) -%}
-    <div class="d-inline-flex w-100 py-1">
-        <div class="fw-bold pe-lg-1">
-            {{ name }}
-        </div>
-        <div class="{{ classValue if classValue }}">{{ value }}</div>
-    </div>
-{%- endmacro %}
+{% from 'card.html' import card %}
 
 {% extends "layout.html" %}
 {% block content %}
@@ -92,42 +85,19 @@
                     {% endfor %}
                 </div>
                 <h5 class="my-2">Активность <span class="badge bg-secondary rounded-pill mx-1">m/n</span></h5>
+                {% if activity_by_user %}
                 {% for item in activity_by_user %}
-                <div class="card mt-2">
-                    <div class="card-header fw-bold">
-                        {{ item.name }}
-                    </div>
-                    <div class="card-body">
-                        <div class="card-text">
-                            {% set file_link %}
-                            <a href="{{ url_for('main.download_file', name=item.file) }}"
-                               download="">
-                                {{ item.file }}
-                            </a>
-                            {% endset %}
-                            {{ cardItem('Файл:', file_link) }}
-                            {{ cardItem('Баллы:', item.rate.value) }}
-                            {% if item.rate.sub_type %}
-                                {{ cardItem('Тип:', item.rate.sub_type.name) }}
-                            {% endif %}
-                            {% if item.comment %}
-                                {{ cardItem('Комментарий:', item.comment) }}
-                            {% endif %}
-                            {% if item.status == True %}
-                                {{ cardItem('Статус:', 'Принято', 'text-success') }}
-                            {% elif item.status == False %}
-                                {{ cardItem('Статус:', 'Отклонено', 'text-danger') }}
-                            {% else %}
-                                {{ cardItem('Статус:', 'На рассмотрении') }}
-                                <a href="#"
-                                   class="btn btn-outline-primary">Принять</a>
-                                <a href="#"
-                                   class="btn btn-outline-danger">Отклонить</a>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
+                {% set buttons %}
+                    <a href="{{ url_for('deans_office.activity_accept', activity_id=item.id, group_id=group_id, student_id=student_id) }}"
+                       class="btn btn-outline-primary">Принять</a>
+                    <a href="#"
+                       class="btn btn-outline-danger">Отклонить</a>
+                {% endset %}
+                {{ card(item, buttons) }}
                 {% endfor %}
+                {% else %}
+                <p class="text-muted">Данных по активной деятельности не существует</p>
+                {% endif %}
             </div>
             {% else %}
             <p class="text-muted">Данных пока нет, обратитесь к администратору системы</p>

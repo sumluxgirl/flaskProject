@@ -1,0 +1,41 @@
+{% macro cardItem(name, value, classValue) -%}
+    <div class="d-inline-flex w-100 py-1">
+        <div class="fw-bold pe-lg-1">
+            {{ name }}
+        </div>
+        <div class="{{ classValue if classValue }}">{{ value }}</div>
+    </div>
+{%- endmacro %}
+{% macro card(item, buttons) %}
+    <div class="card mt-2">
+                    <div class="card-header fw-bold">
+                        {{ item.name }}
+                    </div>
+                    <div class="card-body">
+                        <div class="card-text">
+                            {% set file_link %}
+                            <a href="{{ url_for('main.download_file', name=item.file) }}"
+                               download="">
+                                {{ item.file }}
+                            </a>
+                            {% endset %}
+                            {{ cardItem('Файл:', file_link) }}
+                            {{ cardItem('Баллы:', item.rate.value) }}
+                            {% if item.rate.sub_type %}
+                                {{ cardItem('Тип:', item.rate.sub_type.name) }}
+                            {% endif %}
+                            {% if item.comment %}
+                                {{ cardItem('Комментарий:', item.comment) }}
+                            {% endif %}
+                            {% if item.status == True %}
+                                {{ cardItem('Статус:', 'Принято', 'text-success') }}
+                            {% elif item.status == False %}
+                                {{ cardItem('Статус:', 'Отклонено', 'text-danger') }}
+                            {% else %}
+                                {{ cardItem('Статус:', 'На рассмотрении') }}
+                                {{ buttons }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+{% endmacro %}
