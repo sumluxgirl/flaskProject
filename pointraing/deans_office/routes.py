@@ -83,6 +83,10 @@ def activity_decline(activity_id, group_id, student_id):
     if not activity:
         flash('Выбранной активной деяотельности не существует, обратитесь к администратору системы', 'warning')
         return redirect('main.home')
+    student = User.query.get_or_404(student_id)
+    if not student:
+        flash('Выбранного пользователя не существует, обратитесь к администратору системы', 'warning')
+        return redirect('main.home')
     form = DeclineActivityForm()
     if form.validate_on_submit():
         activity.status = False
@@ -90,7 +94,14 @@ def activity_decline(activity_id, group_id, student_id):
         db.session.commit()
         flash('Активность обновлена!', 'success')
         return redirect(url_for('deans_office.rating', group_id=group_id, student_id=student_id))
-    # return render_template('main.home')
-    return redirect('main.home')
+    return render_template('activity_decline.html',
+                           title='Отклонить активную деаятельность',
+                           group_id=group_id,
+                           name_student=get_full_name(student),
+                           student_id=student_id,
+                           activity_id=activity_id,
+                           form=form,
+                           activity=activity
+                           )
 
 

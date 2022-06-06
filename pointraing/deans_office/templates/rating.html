@@ -90,7 +90,7 @@
                 {% set buttons %}
                     <a href="{{ url_for('deans_office.activity_accept', activity_id=item.id, group_id=group_id, student_id=student_id) }}"
                        class="btn btn-outline-primary">Принять</a>
-                    <a href="#"
+                    <a href="{{url_for('deans_office.activity_decline', activity_id=item.id, group_id=group_id, student_id=student_id)}}"
                        class="btn btn-outline-danger">Отклонить</a>
                 {% endset %}
                 {{ card(item, buttons) }}

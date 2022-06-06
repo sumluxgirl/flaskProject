@@ -1,0 +1,30 @@
+{% from 'card.html' import card %}
+{% set buttons %}
+<form method="POST" action="" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+    <fieldset class="form-group">
+        <div class="form-group">
+            {{ form.comment.label(class="form-control-label fw-bold py-2") }}
+            {% if form.comment.errors %}
+                {{ form.comment(class="form-control form-control-sm is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in form.comment.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% else %}
+                {{ form.comment(class="form-control form-control-sm py-2") }}
+            {% endif %}
+        </div>
+    </fieldset>
+    <div class="form-group">
+        {{ form.submit(class="btn btn-outline-info mt-2") }}
+    </div>
+</form>
+{% endset %}
+
+{% extends "layout.html" %}
+{% block content %}
+    <h2>{{ name_student }}</h2>
+    {{ card(activity, buttons) }}
+{% endblock %}
