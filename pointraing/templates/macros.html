@@ -7,3 +7,12 @@
            href="{{ url }}">{{ name }}</a>
     </li>
 {%- endmacro %}
+{% macro listItem(name, url, is_active) %}
+    <div class="list-group list-group-flush">
+        <a class="list-group-item list-group-item-action {{ 'active' if is_active }}"
+                {% if is_active %}
+           aria-current="true"
+                {% endif %}
+           href="{{ url }}">{{ name }}</a>
+    </div>
+{% endmacro %}

@@ -2,35 +2,25 @@
     <span class="badge bg-secondary rounded-pill mx-1">{{ count }}/{{ max_count }}</span>
 {%- endmacro %}
 {% from 'card.html' import card %}
-{% from 'macros.html' import pageItem %}
+{% from 'macros.html' import pageItem, listItem %}
 
 {% extends "layout.html" %}
 {% block content %}
 <div class="row pt-2">
+    <ul class="nav nav-tabs justify-content-end">
+        {{ pageItem('Рейтинг',
+                        url_for('deans_office.rating', group_id=group_id),
+                        active_tab == 'rating') }}
+        {{ pageItem('Администрирование',
+                        url_for('deans_office.admin'),
+                        active_tab == 'admin') }}
+    </ul>
     <div class="col-md-2">
         {% for item in groups %}
-            <div class="list-group list-group-flush">
-                {% if item.id == group_id %}
-                    <a href="{{ url_for('deans_office.rating', group_id=item.id) }}"
-                       class="list-group-item list-group-item-action active" aria-current="true">
-                {% else %}
-                    <a href="{{ url_for('deans_office.rating', group_id=item.id) }}"
-                       class="list-group-item list-group-item-action">
-                {% endif %}
-                {{ item.name }}
-                </a>
-            </div>
+            {{ listItem(item.name, url_for('deans_office.rating', group_id=item.id), item.id == group_id) }}
         {% endfor %}
     </div>
     <div class="col-md-10">
-        <ul class="nav nav-tabs justify-content-end">
-            {{ pageItem('Рейтинг',
-                        url_for('deans_office.rating', group_id=group_id),
-                        active_tab == 'rating') }}
-            {{ pageItem('Активность',
-                        '#',
-                        active_tab == 'active') }}
-        </ul>
         <div class="row">
             {% if students %}
             <div class="col-md-4">
@@ -80,10 +70,10 @@
                 {% if activity_by_user %}
                 {% for item in activity_by_user %}
                 {% set buttons %}
-                    <a href="{{ url_for('deans_office.activity_accept', activity_id=item.id, group_id=group_id, student_id=student_id) }}"
-                       class="btn btn-outline-primary">Принять</a>
-                    <a href="{{url_for('deans_office.activity_decline', activity_id=item.id, group_id=group_id, student_id=student_id)}}"
-                       class="btn btn-outline-danger">Отклонить</a>
+                <a href="{{ url_for('deans_office.activity_accept', activity_id=item.id, group_id=group_id, student_id=student_id) }}"
+                   class="btn btn-outline-primary">Принять</a>
+                <a href="{{ url_for('deans_office.activity_decline', activity_id=item.id, group_id=group_id, student_id=student_id) }}"
+                   class="btn btn-outline-danger">Отклонить</a>
                 {% endset %}
                 {{ card(item, buttons) }}
                 {% endfor %}

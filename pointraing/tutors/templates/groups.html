@@ -1,4 +1,4 @@
-{% from 'macros.html' import pageItem %}
+{% from 'macros.html' import pageItem, listItem %}
 {% extends "layout.html" %}
 {% block content %}
     <nav aria-label="breadcrumb pt-1">
@@ -14,17 +14,7 @@
     <div class="row pt-2">
         <div class="col-md-4">
             {% for item in groups %}
-                <div class="list-group list-group-flush">
-                    {% if item.id == group_id %}
-                        <a href="{{ url_for('tutors.get_attendance', subject_id=subject_id, group_id=item.id) }}"
-                           class="list-group-item list-group-item-action active" aria-current="true">
-                    {% else %}
-                        <a href="{{ url_for('tutors.get_attendance', subject_id=subject_id, group_id=item.id) }}"
-                           class="list-group-item list-group-item-action">
-                    {% endif %}
-                    {{ item.name }}
-                    </a>
-                </div>
+                {{ listItem(item.name, url_for('tutors.get_attendance', subject_id=subject_id, group_id=item.id), item.id == group_id) }}
             {% endfor %}
         </div>
         <div class="col-md-8">

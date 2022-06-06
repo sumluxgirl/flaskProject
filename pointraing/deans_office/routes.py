@@ -105,3 +105,8 @@ def activity_decline(activity_id, group_id, student_id):
                            )
 
 
+@deans_office.route('/admin')
+@login_required
+def admin():
+    return render_template('admin.html')
+
