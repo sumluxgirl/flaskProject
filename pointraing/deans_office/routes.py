@@ -20,12 +20,9 @@ def rating(group_id=None, student_id=None):
             group_id = current_group.id
         else:
             flash('Групп пока не существует, обратитесь к администратору системы', 'warning')
-            return redirect('main.home')
+            return redirect(url_for('main.home'))
     else:
         current_group = Group.query.get_or_404(group_id)
-        if not current_group:
-            flash('Выбранной группы не существует, обратитесь к администратору системы', 'warning')
-            return redirect('main.home')
     students_list = current_group.users.all()
     if not student_id:
         if len(students_list) > 0:
@@ -33,12 +30,12 @@ def rating(group_id=None, student_id=None):
             student_id = select_user.id
         else:
             flash('Студентов в этой группе пока не существует, обратитесь к администратору системы', 'warning')
-            return redirect('main.home')
+            return redirect(url_for('main.home'))
     else:
         select_user = current_group.users.filter(User.id == student_id).first()
         if not select_user:
             flash('Выбранной группе такого студента не существует, обратитесь к администратору системы', 'warning')
-            return redirect('main.home')
+            return redirect(url_for('main.home'))
     students = []
     for item in students_list:
         students.append({
@@ -66,9 +63,6 @@ def rating(group_id=None, student_id=None):
 @login_required
 def activity_accept(activity_id, group_id, student_id):
     activity = Activity.query.get_or_404(activity_id)
-    if not activity:
-        flash('Выбранной активной деяотельности не существует, обратитесь к администратору системы', 'warning')
-        return redirect('main.home')
     activity.status = True
     db.session.commit()
     flash('Активность обновлена!', 'success')
@@ -80,13 +74,7 @@ def activity_accept(activity_id, group_id, student_id):
 @login_required
 def activity_decline(activity_id, group_id, student_id):
     activity = Activity.query.get_or_404(activity_id)
-    if not activity:
-        flash('Выбранной активной деяотельности не существует, обратитесь к администратору системы', 'warning')
-        return redirect('main.home')
     student = User.query.get_or_404(student_id)
-    if not student:
-        flash('Выбранного пользователя не существует, обратитесь к администратору системы', 'warning')
-        return redirect('main.home')
     form = DeclineActivityForm()
     if form.validate_on_submit():
         activity.status = False

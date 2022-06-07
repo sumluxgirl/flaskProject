@@ -25,9 +25,6 @@ def subjects():
 
 def get_main_lists(subject_id, group_id=None):
     subject = Subject.query.get_or_404(subject_id)
-    if not subject:
-        flash('Выбранного предмета не существует, обратитесь к администратору системы', 'warning')
-        return redirect('main.home')
     subject_name = subject.name
     groups = []
     for attendance in Attendance.query.filter(Attendance.subject_id == subject_id).group_by(Attendance.group_id):
@@ -36,11 +33,8 @@ def get_main_lists(subject_id, group_id=None):
         group_id = groups[0].id
     if not group_id:
         flash('Данные по группам не заполнены, обратитесь к администратору системы', 'warning')
-        return redirect('main.home')
+        return redirect(url_for('main.home'))
     current_group = Group.query.get_or_404(group_id)
-    if not current_group:
-        flash('Выбранной группы не существует, обратитесь к администратору системы', 'warning')
-        return redirect('main.home')
     students_list = current_group.users.order_by(User.surname).all()
     return (
         groups,
@@ -104,9 +98,6 @@ def get_attendance(subject_id, group_id=None):
 @login_required
 def attendance_grade_update(subject_id, attendance_id, group_id=None):
     current_attendance = Attendance.query.get_or_404(attendance_id)
-    if not current_attendance:
-        flash('Такого посещения нет, обратитесь к администратору системы', 'warning')
-        return redirect('main.home')
     is_new = (current_attendance.date - datetime.now()).total_seconds() >= 0
     groups, current_group, students, attendance, subject_name, group_id = get_groups(subject_id, group_id)
     list_sorter = {}
