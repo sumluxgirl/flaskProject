@@ -1,11 +1,24 @@
 from flask import Blueprint, render_template, flash, redirect, url_for
 from flask_login import current_user, login_required
-from pointraing.models import Group, User, Subject, Attendance, Activity
+from pointraing.models import Group, User, Subject, Attendance, Activity, Lab
 from pointraing.main.routes import get_full_name
 from pointraing import db
 from pointraing.deans_office.forms import DeclineActivityForm
 
 deans_office = Blueprint('deans_office', __name__, template_folder='templates')
+
+SUBJECT = 'subject'
+LAB = 'lab'
+ATTENDANCE = 'attendance'
+ATTENDANCE_TYPE = 'attendance_type'
+GRADE = 'grade'
+TYPE_GRADE = 'type_grade'
+GROUP = 'group'
+ROLE = 'role'
+USER = 'user'
+ACTIVITY_TYPE = 'activity_type'
+ACTIVITY_SUB_TYPE = 'activity_sub_type'
+RATE_ACTIVITY = 'rate_activity'
 
 
 @deans_office.route('/rating')
@@ -100,57 +113,117 @@ def admin(entity=None):
     groups = [{
         'name': 'Предметы',
         'url': '#',
-        'id': 'subject'
+        'id': SUBJECT
     }, {
         'name': 'Лабораторные работы',
         'url': '#',
-        'id': 'lab'
+        'id': LAB
     }, {
         'name': 'Рассписание',
         'url': '#',
-        'id': 'attendance'
+        'id': ATTENDANCE
     }, {
         'name': 'Типы посешений',
         'url': '#',
-        'id': 'attendance_type'
+        'id': ATTENDANCE_TYPE
     }, {
         'name': 'Оценки',
         'url': '#',
-        'id': 'grade'
+        'id': GRADE
     }, {
         'name': 'Типы оценок',
         'url': '#',
-        'id': 'type_grade'
+        'id': TYPE_GRADE
     }, {
         'name': 'Группы',
         'url': '#',
-        'id': 'group'
+        'id': GROUP
     }, {
         'name': 'Роли',
         'url': '#',
-        'id': 'role'
+        'id': ROLE
     }, {
         'name': 'Пользователи',
         'url': '#',
-        'id': 'user'
+        'id': USER
     }, {
         'name': 'Типы активности',
         'url': '#',
-        'id': 'activity_type'
+        'id': ACTIVITY_TYPE
     }, {
         'name': 'Подтипы активности',
         'url': '#',
-        'id': 'activity_sub_type'
+        'id': ACTIVITY_SUB_TYPE
     }, {
         'name': 'Рейтинг активности',
         'url': '#',
-        'id': 'rate_activity'
+        'id': RATE_ACTIVITY
     }]
     if not entity:
         entity = groups[0]['id']
+    if entity == SUBJECT:
+        add_url, fields, entity_list_values = admin_subjects()
+    elif entity == LAB:
+        add_url, fields, entity_list_values = admin_lab()
+    elif entity == ATTENDANCE:
+        add_url, fields, entity_list_values = admin_attendance()
     return render_template('admin.html',
                            title='Администрирование',
                            entity=entity,
                            groups=groups,
+                           fields=fields,
+                           add_url=add_url,
+                           entity_list_values=entity_list_values,
                            active_tab='admin')
 
+
+def admin_subjects():
+    add_url = '#'
+    fields = ['Название', 'Количество часов']
+    entity_list = Subject.query.order_by(Subject.name)
+    entity_list_values = []
+    for index, item in enumerate(entity_list):
+        entity_list_values.append({
+            'idx': index + 1,
+            'value': [item.name, item.count_hours],
+            'action': {
+                'edit': '#',
+                'delete': '#'
+            }
+        })
+    return add_url, fields, entity_list_values
+
+
+def admin_lab():
+    add_url = '#'
+    fields = ['Название', 'Предмет', 'Дата', 'Дедлайн']
+    entity_list = Lab.query.order_by(Lab.name)
+    entity_list_values = []
+    for index, item in enumerate(entity_list):
+        entity_list_values.append({
+            'idx': index + 1,
+            'value': [item.name, item.subject.name, item.datetime.strftime('%d/%m/%Y'),
+                      item.deadline.strftime('%d/%m/%Y')],
+            'action': {
+                'edit': '#',
+                'delete': '#'
+            }
+        })
+    return add_url, fields, entity_list_values
+
+
+def admin_attendance():
+    add_url = '#'
+    fields = ['Предмет', 'Группа', 'Тип', 'Дата']
+    entity_list = Attendance.query.order_by(Attendance.date)
+    entity_list_values = []
+    for index, item in enumerate(entity_list):
+        entity_list_values.append({
+            'idx': index + 1,
+            'value': [item.subject.name, item.group.name, item.type.name, item.date.strftime('%d/%m/%Y')],
+            'action': {
+                'edit': '#',
+                'delete': '#'
+            }
+        })
+    return add_url, fields, entity_list_values
