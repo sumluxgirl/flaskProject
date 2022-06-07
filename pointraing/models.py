@@ -160,6 +160,8 @@ class TypeGrade(db.Model):
 class Grade(db.Model):
     id = db.Column(db.String(32), primary_key=True)
     subject_id = db.Column(db.String(32), db.ForeignKey('subject.id'), nullable=False)
+    subject = db.relationship('Subject',
+                              backref=db.backref('grade', lazy=True))
     date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     type_id = db.Column(db.String(32), db.ForeignKey('type_grade.id'), nullable=False)
     type = db.relationship('TypeGrade',
@@ -174,7 +176,7 @@ class GradeUsers(db.Model):
     user_id = db.Column(db.String(32), db.ForeignKey('user.id'), nullable=False)
     grade_id = db.Column(db.String(32), db.ForeignKey('grade.id'), nullable=False)
     grade = db.relationship('Grade',
-                           backref=db.backref('grade_users', lazy=True))
+                            backref=db.backref('grade_users', lazy=True))
     value = db.Column(db.Integer, default=0)
 
     def __repr__(self):
