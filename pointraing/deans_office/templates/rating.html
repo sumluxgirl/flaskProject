@@ -31,7 +31,7 @@
             {% endfor %}
         </div>
         <div class="col-md-8">
-            <h5 class="my-2">Предметы {{ badgeItem('n', 'm') }}</h5>
+            <h5 class="my-2">Предметы {{ badgeItem(subjects_count, subjects_max_count) }}</h5>
             <div class="accordion my-2" id="accordionPanelsStayOpenExample">
                 {% for item in subjects %}
                     <div class="accordion-item">
@@ -40,7 +40,7 @@
                                     data-bs-toggle="collapse"
                                     data-bs-target="#collapse-{{ item.id }}" aria-expanded="false"
                                     aria-controls="collapse-{{ item.id }}">
-                                {{ item.name }} {{ badgeItem(item.count, item.max_count) }}
+                                {{ item.name }} {{ badgeItem(item.count_subj, item.max_count) }}
                             </button>
                         </h2>
                         <div id="collapse-{{ item.id }}" class="accordion-collapse collapse"
@@ -57,7 +57,7 @@
                     </div>
                 {% endfor %}
             </div>
-            <h5 class="my-2">Активность <span class="badge bg-secondary rounded-pill mx-1">m/n</span></h5>
+            <h5 class="my-2">Активность <span class="badge bg-secondary rounded-pill mx-1">{{ activity_by_user_count }}</span></h5>
             {% if activity_by_user %}
             {% for item in activity_by_user %}
             {% set buttons %}

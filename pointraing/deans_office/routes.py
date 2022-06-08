@@ -1,10 +1,11 @@
 from flask import Blueprint, render_template, flash, redirect, url_for
 from flask_login import current_user, login_required
 from pointraing.models import Group, User, Attendance, Activity, AttendanceGrade, Lab, LabsGrade, Grade, GradeUsers, \
-    TypeGrade
+    TypeGrade, RateActivity
 from pointraing.main.routes import get_full_name
 from pointraing import db
 from pointraing.deans_office.forms import DeclineActivityForm
+from sqlalchemy.sql import func
 
 deans_office = Blueprint('deans_office', __name__, template_folder='templates')
 
@@ -46,6 +47,8 @@ def rating(group_id=None, student_id=None):
     attendance_sq = Attendance.query.filter_by(group_id=group_id)
     attendance_subjects = attendance_sq.group_by(Attendance.subject_id).all()
     subjects = []
+    subjects_count = 0
+    subjects_max_count = 0
     for i in attendance_subjects:
         subject = i.subject
         subject_id = subject.id
@@ -87,6 +90,10 @@ def rating(group_id=None, student_id=None):
         lab_max_count = lab_sq.count() * 2
         grade_max_count = grade_type_sq.filter(TypeGrade.name == 'Экзамен').count() * 5 + grade_type_sq.filter(
             TypeGrade.name == 'Зачет').count()
+        count_subj = attendance_count + lab_count + grade_count
+        max_count = attendance_max_count + lab_max_count + grade_max_count
+        subjects_max_count = subjects_max_count + max_count
+        subjects_count = subjects_count + count_subj
         subjects.append({
             'id': subject_id,
             'name': subject.name,
@@ -96,10 +103,15 @@ def rating(group_id=None, student_id=None):
             'lab_count': lab_count,
             'grade_max_count': grade_max_count,
             'grade_count': grade_count,
-            'count': attendance_count + lab_count + grade_count,
-            'max_count': attendance_max_count + lab_max_count + grade_max_count
+            'count_subj': count_subj,
+            'max_count': max_count
         })
     activity_by_user = Activity.query.filter(Activity.user_id == student_id).order_by(Activity.status).all()
+    activity_by_user_count = Activity.query \
+        .join(Activity.rate) \
+        .with_entities(func.sum(RateActivity.value).label('sum_activity')) \
+        .filter(Activity.user_id == student_id).filter(Activity.status == True) \
+        .group_by(Activity.id).first()
     return render_template('rating.html',
                            title='Рейтинг УГАТУ',
                            group_id=group_id,
@@ -107,7 +119,10 @@ def rating(group_id=None, student_id=None):
                            students=students,
                            student_id=student_id,
                            subjects=subjects,
+                           subjects_max_count=subjects_max_count,
+                           subjects_count=subjects_count,
                            activity_by_user=activity_by_user,
+                           activity_by_user_count=activity_by_user_count.sum_activity if activity_by_user_count else 0,
                            active_tab='rating'
                            )
 
