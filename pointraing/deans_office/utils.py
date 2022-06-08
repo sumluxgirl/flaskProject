@@ -84,20 +84,29 @@ def get_entities_values():
     }
 
 
+def admin_entities(entity_list, value, action):
+    entity_list_values = []
+    for index, item in enumerate(entity_list):
+        values = []
+        for it_val in value:
+            values.append(item.__dict__[it_val])
+        entity_list_values.append({
+            'idx': index + 1,
+            'value': values,
+            'action': action
+        })
+    return entity_list_values
+
+
 def admin_subject():
     add_url = '#'
     fields = ['Название', 'Количество часов']
+    values = ['name', 'count_hours']
     entity_list = Subject.query.order_by(Subject.name)
-    entity_list_values = []
-    for index, item in enumerate(entity_list):
-        entity_list_values.append({
-            'idx': index + 1,
-            'value': [item.name, item.count_hours],
-            'action': {
+    entity_list_values = admin_entities(entity_list, values, {
                 'edit': '#',
                 'delete': '#'
-            }
-        })
+            })
     return add_url, fields, entity_list_values
 
 
