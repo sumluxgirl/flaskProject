@@ -3,7 +3,7 @@ from flask import render_template, url_for, redirect, request, flash, abort, sen
 from flask_login import current_user, login_required
 from pointraing.students.forms import StudentActivityForm
 from pointraing.models import Attendance, Lab, LabsGrade, GradeUsers, AttendanceGrade, ActivityType, ActivitySubType, \
-    RateActivity, Activity, Grade
+    RateActivity, Activity, Grade, TypeGrade
 import uuid
 import os
 import secrets
@@ -56,9 +56,13 @@ def education(subject_id=None):
             .filter(LabsGrade.user_id == current_user.id) \
             .count()
         grade = GradeUsers.query\
-            .join(Grade, GradeUsers.grade) \
+            .join(GradeUsers.grade) \
+            .join(Grade.type) \
+            .with_entities(GradeUsers.value, TypeGrade.name, Grade.date) \
             .filter(GradeUsers.user_id == current_user.id) \
-            .filter(Grade.subject_id == subject_id).all()
+            .filter(Grade.subject_id == subject_id)\
+            .group_by(GradeUsers.id) \
+            .all()
 
         return render_template('education.html',
                                active_tab='education',

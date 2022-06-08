@@ -47,7 +47,7 @@
                              aria-labelledby="heading-{{ item.id }}">
                             <div class="accordion-body">
                                 <ul>
-                                    <li>Посещение {{ badgeItem('n', 'm') }}</li>
+                                    <li>Посещение и активность {{ badgeItem(item.count, item.max_count) }}</li>
                                     <li>Лабораторные работы {{ badgeItem('n', 'm') }}</li>
                                     <li>Экзамен {{ badgeItem('n', 'm') }}</li>
                                 </ul>

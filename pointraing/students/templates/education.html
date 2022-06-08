@@ -110,7 +110,7 @@
                                 {% for item in grade %}
                                     <tr class="{{ 'table-success' if item.id else 'table-danger' }}">
                                         <th scope="row">{{ item.date.strftime('%d/%m/%Y') }}</th>
-                                        <td>{{ item.type.name }}</td>
+                                        <td>{{ item.name }}</td>
                                         <td>{{ item.value }}</td>
                                     </tr>
                                 {% endfor %}

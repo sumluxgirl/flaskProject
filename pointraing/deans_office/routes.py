@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, flash, redirect, url_for
 from flask_login import current_user, login_required
-from pointraing.models import Group, User, Attendance, Activity
+from pointraing.models import Group, User, Attendance, Activity, AttendanceGrade
 from pointraing.main.routes import get_full_name
 from pointraing import db
 from pointraing.deans_office.forms import DeclineActivityForm
@@ -42,10 +42,32 @@ def rating(group_id=None, student_id=None):
             'id': item.id,
             'name': get_full_name(item)
         })
-    attendance_subjects = Attendance.query.filter_by(group_id=group_id).group_by(Attendance.subject_id).all()
+    attendance_sq = Attendance.query.filter_by(group_id=group_id)
+    attendance_subjects = attendance_sq.group_by(Attendance.subject_id).all()
     subjects = []
     for i in attendance_subjects:
-        subjects.append(i.subject)
+        subject = i.subject
+        subject_id = subject.id
+        attendance_user = AttendanceGrade.query \
+            .with_entities(AttendanceGrade.active) \
+            .filter(AttendanceGrade.user_id == student_id) \
+            .filter(AttendanceGrade.attendance_id
+                    .in_(attendance_sq
+                         .with_entities(Attendance.id)
+                         .filter(Attendance.subject_id == subject_id))
+                    )\
+            .all()
+        attendance_count = 0
+        for attendance_item in attendance_user:
+            attendance_count = attendance_count + 1
+            if attendance_item.active > 0:
+                attendance_count = attendance_count + attendance_item.active
+        subjects.append({
+            'id': subject_id,
+            'name': subject.name,
+            'max_count': subject.count_hours * 2,
+            'count': attendance_count
+        })
     activity_by_user = Activity.query.filter(Activity.user_id == student_id).order_by(Activity.status).all()
     return render_template('rating.html',
                            title='Рейтинг УГАТУ',
