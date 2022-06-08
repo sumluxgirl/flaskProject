@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, flash, redirect, url_for
 from flask_login import current_user, login_required
-from pointraing.models import Group, User, Attendance, Activity, AttendanceGrade
+from pointraing.models import Group, User, Attendance, Activity, AttendanceGrade, Lab, LabsGrade, Grade, GradeUsers, \
+    TypeGrade
 from pointraing.main.routes import get_full_name
 from pointraing import db
 from pointraing.deans_office.forms import DeclineActivityForm
@@ -48,6 +49,9 @@ def rating(group_id=None, student_id=None):
     for i in attendance_subjects:
         subject = i.subject
         subject_id = subject.id
+        attendance_count = 0
+        lab_count = 0
+        grade_count = 0
         attendance_user = AttendanceGrade.query \
             .with_entities(AttendanceGrade.active) \
             .filter(AttendanceGrade.user_id == student_id) \
@@ -55,18 +59,45 @@ def rating(group_id=None, student_id=None):
                     .in_(attendance_sq
                          .with_entities(Attendance.id)
                          .filter(Attendance.subject_id == subject_id))
-                    )\
+                    ) \
             .all()
-        attendance_count = 0
         for attendance_item in attendance_user:
             attendance_count = attendance_count + 1
             if attendance_item.active > 0:
                 attendance_count = attendance_count + attendance_item.active
+        lab_sq = Lab.query.with_entities(Lab.id).filter(Lab.subject_id == subject_id)
+        lab_user = LabsGrade.query \
+            .filter(LabsGrade.user_id == student_id) \
+            .filter(LabsGrade.lab_id.in_(lab_sq)).all()
+        for item_lab_user in lab_user:
+            if (item_lab_user.date - item_lab_user.lab.deadline).total_seconds() < 0:
+                lab_count = lab_count + 2
+            else:
+                lab_count = lab_count + 1
+        grade_sq = Grade.query.with_entities(Grade.id).filter(Grade.subject_id == subject_id)
+        grade_type_sq = grade_sq.join(Grade.type).group_by(Grade.id)
+        grade_user = GradeUsers.query \
+            .with_entities(GradeUsers.value) \
+            .filter(GradeUsers.user_id == student_id) \
+            .filter(GradeUsers.grade_id.in_(grade_sq)).all()
+        for item_grade_user in grade_user:
+            grade_count = grade_count + item_grade_user.value
+
+        attendance_max_count = subject.count_hours * 2
+        lab_max_count = lab_sq.count() * 2
+        grade_max_count = grade_type_sq.filter(TypeGrade.name == 'Экзамен').count() * 5 + grade_type_sq.filter(
+            TypeGrade.name == 'Зачет').count()
         subjects.append({
             'id': subject_id,
             'name': subject.name,
-            'max_count': subject.count_hours * 2,
-            'count': attendance_count
+            'attendance_max_count': attendance_max_count,
+            'attendance_count': attendance_count,
+            'lab_max_count': lab_max_count,
+            'lab_count': lab_count,
+            'grade_max_count': grade_max_count,
+            'grade_count': grade_count,
+            'count': attendance_count + lab_count + grade_count,
+            'max_count': attendance_max_count + lab_max_count + grade_max_count
         })
     activity_by_user = Activity.query.filter(Activity.user_id == student_id).order_by(Activity.status).all()
     return render_template('rating.html',
@@ -137,5 +168,3 @@ def admin(entity=None):
                            add_url=add_url,
                            entity_list_values=entity_list_values,
                            active_tab='admin')
-
-

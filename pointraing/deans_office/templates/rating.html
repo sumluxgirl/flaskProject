@@ -40,16 +40,16 @@
                                     data-bs-toggle="collapse"
                                     data-bs-target="#collapse-{{ item.id }}" aria-expanded="false"
                                     aria-controls="collapse-{{ item.id }}">
-                                {{ item.name }} {{ badgeItem('n', 'm') }}
+                                {{ item.name }} {{ badgeItem(item.count, item.max_count) }}
                             </button>
                         </h2>
                         <div id="collapse-{{ item.id }}" class="accordion-collapse collapse"
                              aria-labelledby="heading-{{ item.id }}">
                             <div class="accordion-body">
                                 <ul>
-                                    <li>Посещение и активность {{ badgeItem(item.count, item.max_count) }}</li>
-                                    <li>Лабораторные работы {{ badgeItem('n', 'm') }}</li>
-                                    <li>Экзамен {{ badgeItem('n', 'm') }}</li>
+                                    <li>Посещение и активность {{ badgeItem(item.attendance_count, item.attendance_max_count) }}</li>
+                                    <li>Лабораторные работы {{ badgeItem(item.lab_count, item.lab_max_count) }}</li>
+                                    <li>Экзамен {{ badgeItem(item.grade_count, item.grade_max_count) }}</li>
                                 </ul>
                                 <a class="btn btn-outline-info" href="#" role="button">Подробнее</a>
                             </div>
