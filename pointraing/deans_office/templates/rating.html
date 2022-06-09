@@ -25,7 +25,7 @@
                         <a href="{{ url_for('deans_office.rating', student_id=item.id, group_id=group_id) }}"
                            class="list-group-item list-group-item-action fw-bold">
                     {% endif %}
-                    {{ item.name }}<span class="badge rounded-pill bg-danger mx-1">N</span>
+                    {{ item.name }}<span class="badge rounded-pill bg-danger mx-1">{{ item.count }}</span>
                     </a>
                 </div>
             {% endfor %}

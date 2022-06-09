@@ -40,78 +40,14 @@ def rating(group_id=None, student_id=None):
             return redirect(url_for('main.home'))
     students = []
     for item in students_list:
+        current_student_id = item.id
         students.append({
-            'id': item.id,
-            'name': get_full_name(item)
+            'id': current_student_id,
+            'name': get_full_name(item),
+            'count': get_user_full_rating(current_student_id)
         })
-    attendance_sq = Attendance.query.filter_by(group_id=group_id)
-    attendance_subjects = attendance_sq.group_by(Attendance.subject_id).all()
-    subjects = []
-    subjects_count = 0
-    subjects_max_count = 0
-    for i in attendance_subjects:
-        subject = i.subject
-        subject_id = subject.id
-        attendance_count = 0
-        lab_count = 0
-        grade_count = 0
-        attendance_user = AttendanceGrade.query \
-            .with_entities(AttendanceGrade.active) \
-            .filter(AttendanceGrade.user_id == student_id) \
-            .filter(AttendanceGrade.attendance_id
-                    .in_(attendance_sq
-                         .with_entities(Attendance.id)
-                         .filter(Attendance.subject_id == subject_id))
-                    ) \
-            .all()
-        for attendance_item in attendance_user:
-            attendance_count = attendance_count + 1
-            if attendance_item.active > 0:
-                attendance_count = attendance_count + attendance_item.active
-        lab_sq = Lab.query.with_entities(Lab.id).filter(Lab.subject_id == subject_id)
-        lab_user = LabsGrade.query \
-            .filter(LabsGrade.user_id == student_id) \
-            .filter(LabsGrade.lab_id.in_(lab_sq)).all()
-        for item_lab_user in lab_user:
-            if (item_lab_user.date - item_lab_user.lab.deadline).total_seconds() < 0:
-                lab_count = lab_count + 2
-            else:
-                lab_count = lab_count + 1
-        grade_sq = Grade.query.with_entities(Grade.id).filter(Grade.subject_id == subject_id)
-        grade_type_sq = grade_sq.join(Grade.type).group_by(Grade.id)
-        grade_user = GradeUsers.query \
-            .with_entities(GradeUsers.value) \
-            .filter(GradeUsers.user_id == student_id) \
-            .filter(GradeUsers.grade_id.in_(grade_sq)).all()
-        for item_grade_user in grade_user:
-            grade_count = grade_count + item_grade_user.value
-
-        attendance_max_count = subject.count_hours * 2
-        lab_max_count = lab_sq.count() * 2
-        grade_max_count = grade_type_sq.filter(TypeGrade.name == 'Экзамен').count() * 5 + grade_type_sq.filter(
-            TypeGrade.name == 'Зачет').count()
-        count_subj = attendance_count + lab_count + grade_count
-        max_count = attendance_max_count + lab_max_count + grade_max_count
-        subjects_max_count = subjects_max_count + max_count
-        subjects_count = subjects_count + count_subj
-        subjects.append({
-            'id': subject_id,
-            'name': subject.name,
-            'attendance_max_count': attendance_max_count,
-            'attendance_count': attendance_count,
-            'lab_max_count': lab_max_count,
-            'lab_count': lab_count,
-            'grade_max_count': grade_max_count,
-            'grade_count': grade_count,
-            'count_subj': count_subj,
-            'max_count': max_count
-        })
-    activity_by_user = Activity.query.filter(Activity.user_id == student_id).order_by(Activity.status).all()
-    activity_by_user_count = Activity.query \
-        .join(Activity.rate) \
-        .with_entities(func.sum(RateActivity.value).label('sum_activity')) \
-        .filter(Activity.user_id == student_id).filter(Activity.status == True) \
-        .group_by(Activity.id).first()
+    subjects, subjects_count, subjects_max_count = get_user_subjects_rating(group_id, student_id)
+    activity_by_user, activity_by_user_count = get_user_activity_rating(student_id)
     return render_template('rating.html',
                            title='Рейтинг УГАТУ',
                            group_id=group_id,
@@ -125,6 +61,132 @@ def rating(group_id=None, student_id=None):
                            activity_by_user_count=activity_by_user_count.sum_activity if activity_by_user_count else 0,
                            active_tab='rating'
                            )
+
+
+def get_attendance_rating_by_user(student_id, subject_id, subject, attendance_sq):
+    attendance_count = 0
+    attendance_user = AttendanceGrade.query \
+        .with_entities(AttendanceGrade.active) \
+        .filter(AttendanceGrade.user_id == student_id) \
+        .filter(AttendanceGrade.attendance_id
+                .in_(attendance_sq
+                     .with_entities(Attendance.id)
+                     .filter(Attendance.subject_id == subject_id))
+                ) \
+        .all()
+    for attendance_item in attendance_user:
+        attendance_count = attendance_count + 1
+        if attendance_item.active > 0:
+            attendance_count = attendance_count + attendance_item.active
+    attendance_max_count = subject.count_hours * 2
+    return attendance_count, attendance_max_count
+
+
+def get_labs_rating_by_user(student_id, subject_id):
+    lab_count = 0
+    lab_sq = Lab.query.with_entities(Lab.id).filter(Lab.subject_id == subject_id)
+    lab_user = LabsGrade.query \
+        .filter(LabsGrade.user_id == student_id) \
+        .filter(LabsGrade.lab_id.in_(lab_sq)).all()
+    for item_lab_user in lab_user:
+        if (item_lab_user.date - item_lab_user.lab.deadline).total_seconds() < 0:
+            lab_count = lab_count + 2
+        else:
+            lab_count = lab_count + 1
+    lab_max_count = lab_sq.count() * 2
+    return lab_count, lab_max_count
+
+
+def get_grades_rating_by_user(student_id, subject_id):
+    grade_count = 0
+    grade_sq = Grade.query.with_entities(Grade.id).filter(Grade.subject_id == subject_id)
+    grade_type_sq = grade_sq.join(Grade.type).group_by(Grade.id)
+    grade_user = GradeUsers.query \
+        .with_entities(GradeUsers.value) \
+        .filter(GradeUsers.user_id == student_id) \
+        .filter(GradeUsers.grade_id.in_(grade_sq)).all()
+    for item_grade_user in grade_user:
+        grade_count = grade_count + item_grade_user.value
+
+    grade_max_count = grade_type_sq.filter(TypeGrade.name == 'Экзамен').count() * 5 + grade_type_sq.filter(
+        TypeGrade.name == 'Зачет').count()
+    return grade_count, grade_max_count
+
+
+def get_user_rating_by_subject(subject, student_id, attendance_sq):
+    subject_id = subject.id
+    attendance_count, attendance_max_count = get_attendance_rating_by_user(student_id, subject_id, subject,
+                                                                           attendance_sq)
+    lab_count, lab_max_count = get_labs_rating_by_user(student_id, subject_id)
+    grade_count, grade_max_count = get_grades_rating_by_user(student_id, subject_id)
+    count_subj = attendance_count + lab_count + grade_count
+    max_count = attendance_max_count + lab_max_count + grade_max_count
+    subject_rating = {
+        'id': subject_id,
+        'name': subject.name,
+        'attendance_max_count': attendance_max_count,
+        'attendance_count': attendance_count,
+        'lab_max_count': lab_max_count,
+        'lab_count': lab_count,
+        'grade_max_count': grade_max_count,
+        'grade_count': grade_count,
+        'count_subj': count_subj,
+        'max_count': max_count
+    }
+    return count_subj, max_count, subject_rating
+
+
+def get_user_subjects_rating(group_id, student_id):
+    attendance_sq = Attendance.query.filter_by(group_id=group_id)
+    attendance_subjects = attendance_sq.group_by(Attendance.subject_id).all()
+    subjects = []
+    subjects_count = 0
+    subjects_max_count = 0
+    for i in attendance_subjects:
+        subject = i.subject
+        count_subj, max_count, subject_rating = get_user_rating_by_subject(subject, student_id, attendance_sq)
+        subjects.append(subject_rating)
+        subjects_max_count = subjects_max_count + max_count
+        subjects_count = subjects_count + count_subj
+    return subjects, subjects_count, subjects_max_count
+
+
+def get_user_activity_rating(student_id):
+    activity_by_user = Activity.query.filter(Activity.user_id == student_id).order_by(Activity.status).all()
+    activity_by_user_count = Activity.query \
+        .join(Activity.rate) \
+        .with_entities(func.sum(RateActivity.value).label('sum_activity')) \
+        .filter(Activity.user_id == student_id).filter(Activity.status == True) \
+        .group_by(Activity.id).first()
+    return activity_by_user, activity_by_user_count
+
+
+def get_user_full_rating(student_id):
+    labs_sq = LabsGrade.query \
+        .with_entities(func.count(LabsGrade.id)) \
+        .join(LabsGrade.lab) \
+        .filter(LabsGrade.user_id == student_id) \
+        .group_by(LabsGrade.id)
+    lab_rating_on_time = labs_sq \
+        .filter(LabsGrade.date <= Lab.deadline) \
+        .count()
+    lab_rating_other = labs_sq \
+        .filter(LabsGrade.date > Lab.deadline) \
+        .count()
+    labs_rating = lab_rating_on_time * 2 + lab_rating_other
+    attendance = AttendanceGrade.query \
+        .with_entities(func.sum(AttendanceGrade.active + 1).label('count')) \
+        .filter(AttendanceGrade.user_id == student_id).first()
+    attendance_rating = attendance.count if attendance and attendance.count else 0
+    grade = GradeUsers.query \
+        .with_entities(func.sum(GradeUsers.value).label('count')) \
+        .filter(GradeUsers.user_id == student_id).first()
+    grade_rating = grade.count if grade and grade.count else 0
+    activity = Activity.query.with_entities(func.sum(RateActivity.value).label('count')).join(Activity.rate).filter(
+        Activity.user_id == student_id).group_by(Activity.id).first()
+    activity_rating = activity.count if activity and activity.count else 0
+    print(labs_rating, attendance_rating, grade_rating, activity_rating)
+    return labs_rating + attendance_rating + grade_rating + activity_rating
 
 
 @deans_office.route('/activity/<string:activity_id>/group/<string:group_id>/student/<string:student_id>')
