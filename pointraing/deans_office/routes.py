@@ -185,7 +185,6 @@ def get_user_full_rating(student_id):
     activity = Activity.query.with_entities(func.sum(RateActivity.value).label('count')).join(Activity.rate).filter(
         Activity.user_id == student_id).group_by(Activity.id).first()
     activity_rating = activity.count if activity and activity.count else 0
-    print(labs_rating, attendance_rating, grade_rating, activity_rating)
     return labs_rating + attendance_rating + grade_rating + activity_rating
 
 
