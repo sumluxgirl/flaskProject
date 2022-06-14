@@ -98,6 +98,12 @@ def admin_entities(entity_list, value, action):
     return entity_list_values
 
 
+def admin_simple_entity():
+    fields = ['Название']
+    values = ['name']
+    return fields, values
+
+
 def admin_subject():
     add_url = '#'
     fields = ['Название', 'Количество часов']
@@ -147,18 +153,12 @@ def admin_attendance():
 
 def admin_attendance_type():
     add_url = '#'
-    fields = ['Название']
+    fields, values = admin_simple_entity()
     entity_list = AttendanceType.query.order_by(AttendanceType.name)
-    entity_list_values = []
-    for index, item in enumerate(entity_list):
-        entity_list_values.append({
-            'idx': index + 1,
-            'value': [item.name],
-            'action': {
-                'edit': '#',
-                'delete': '#'
-            }
-        })
+    entity_list_values = admin_entities(entity_list, values, {
+        'edit': '#',
+        'delete': '#'
+    })
     return add_url, fields, entity_list_values
 
 
@@ -181,52 +181,34 @@ def admin_grade():
 
 def admin_type_grade():
     add_url = '#'
-    fields = ['Название']
+    fields, values = admin_simple_entity()
     entity_list = TypeGrade.query.order_by(TypeGrade.name)
-    entity_list_values = []
-    for index, item in enumerate(entity_list):
-        entity_list_values.append({
-            'idx': index + 1,
-            'value': [item.name],
-            'action': {
-                'edit': '#',
-                'delete': '#'
-            }
-        })
+    entity_list_values = admin_entities(entity_list, values, {
+        'edit': '#',
+        'delete': '#'
+    })
     return add_url, fields, entity_list_values
 
 
 def admin_group():
     add_url = '#'
-    fields = ['Название']
+    fields, values = admin_simple_entity()
     entity_list = Group.query.order_by(Group.name)
-    entity_list_values = []
-    for index, item in enumerate(entity_list):
-        entity_list_values.append({
-            'idx': index + 1,
-            'value': [item.name],
-            'action': {
-                'edit': '#',
-                'delete': '#'
-            }
-        })
+    entity_list_values = admin_entities(entity_list, values, {
+        'edit': '#',
+        'delete': '#'
+    })
     return add_url, fields, entity_list_values
 
 
 def admin_role():
     add_url = '#'
-    fields = ['Название']
+    fields, values = admin_simple_entity()
     entity_list = Role.query.order_by(Role.name)
-    entity_list_values = []
-    for index, item in enumerate(entity_list):
-        entity_list_values.append({
-            'idx': index + 1,
-            'value': [item.name],
-            'action': {
-                'edit': '#',
-                'delete': '#'
-            }
-        })
+    entity_list_values = admin_entities(entity_list, values, {
+        'edit': '#',
+        'delete': '#'
+    })
     return add_url, fields, entity_list_values
 
 
@@ -250,35 +232,23 @@ def admin_user():
 
 def admin_activity_type():
     add_url = '#'
-    fields = ['Название']
+    fields, values = admin_simple_entity()
     entity_list = ActivityType.query.order_by(ActivityType.name)
-    entity_list_values = []
-    for index, item in enumerate(entity_list):
-        entity_list_values.append({
-            'idx': index + 1,
-            'value': [item.name],
-            'action': {
-                'edit': '#',
-                'delete': '#'
-            }
-        })
+    entity_list_values = admin_entities(entity_list, values, {
+        'edit': '#',
+        'delete': '#'
+    })
     return add_url, fields, entity_list_values
 
 
 def admin_activity_sub_type():
     add_url = '#'
-    fields = ['Название']
+    fields, values = admin_simple_entity()
     entity_list = ActivitySubType.query.order_by(ActivitySubType.name)
-    entity_list_values = []
-    for index, item in enumerate(entity_list):
-        entity_list_values.append({
-            'idx': index + 1,
-            'value': [item.name],
-            'action': {
-                'edit': '#',
-                'delete': '#'
-            }
-        })
+    entity_list_values = admin_entities(entity_list, values, {
+        'edit': '#',
+        'delete': '#'
+    })
     return add_url, fields, entity_list_values
 
 
