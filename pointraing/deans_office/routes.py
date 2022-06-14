@@ -5,7 +5,7 @@ from pointraing.models import Group, User, Attendance, Activity, AttendanceGrade
 from pointraing.main.routes import get_full_name
 from pointraing import db
 from pointraing.deans_office.forms import DeclineActivityForm
-from sqlalchemy.sql import func
+from sqlalchemy.sql import func, case, desc
 
 deans_office = Blueprint('deans_office', __name__, template_folder='templates')
 
@@ -25,10 +25,10 @@ def rating(group_id=None, student_id=None):
             return redirect(url_for('main.home'))
     else:
         current_group = Group.query.get_or_404(group_id)
-    students_list = current_group.users.all()
+    students_list = get_students_list_with_rating(group_id)
     if not student_id:
         if len(students_list) > 0:
-            select_user = students_list[0]
+            select_user = students_list[0].User
             student_id = select_user.id
         else:
             flash('Студентов в этой группе пока не существует, обратитесь к администратору системы', 'warning')
@@ -40,11 +40,11 @@ def rating(group_id=None, student_id=None):
             return redirect(url_for('main.home'))
     students = []
     for item in students_list:
-        current_student_id = item.id
+        current_student_id = item.User.id
         students.append({
             'id': current_student_id,
-            'name': get_full_name(item),
-            'count': get_user_full_rating(current_student_id)
+            'name': get_full_name(item.User),
+            'count': item.count
         })
     subjects, subjects_count, subjects_max_count = get_user_subjects_rating(group_id, student_id)
     activity_by_user, activity_by_user_count = get_user_activity_rating(student_id)
@@ -161,31 +161,45 @@ def get_user_activity_rating(student_id):
     return activity_by_user, activity_by_user_count
 
 
-def get_user_full_rating(student_id):
+def get_students_list_with_rating(group_id):
+    grade_sq = GradeUsers.query \
+        .with_entities(GradeUsers.user_id, func.sum(GradeUsers.value).label('count')) \
+        .group_by(GradeUsers.user_id).subquery()
+    grade_sq_xpr = case([(grade_sq.c.count != None, grade_sq.c.count)],
+                        else_=0)
+    activity_sq = Activity.query \
+        .join(RateActivity) \
+        .with_entities(Activity.user_id,
+                       func.sum(RateActivity.value).label('count')
+                       ) \
+        .filter(Activity.status == True) \
+        .group_by(Activity.user_id).subquery()
+    activity_xpr = case([(activity_sq.c.count != None, activity_sq.c.count)],
+                        else_=0)
+    attendance_sq_xpr = case([(AttendanceGrade.active != 0, 2)], else_=1)
+    attendance_sq = AttendanceGrade.query \
+        .with_entities(AttendanceGrade.user_id, func.sum(attendance_sq_xpr).label('count')) \
+        .group_by(AttendanceGrade.user_id).subquery()
+    attendance_xpr = case([(attendance_sq.c.count != None, attendance_sq.c.count)],
+                          else_=0)
+    labs_sq_xpr = case([(LabsGrade.date < Lab.deadline, 2)], else_=1)
     labs_sq = LabsGrade.query \
-        .with_entities(func.count(LabsGrade.id)) \
-        .join(LabsGrade.lab) \
-        .filter(LabsGrade.user_id == student_id) \
-        .group_by(LabsGrade.id)
-    lab_rating_on_time = labs_sq \
-        .filter(LabsGrade.date <= Lab.deadline) \
-        .count()
-    lab_rating_other = labs_sq \
-        .filter(LabsGrade.date > Lab.deadline) \
-        .count()
-    labs_rating = lab_rating_on_time * 2 + lab_rating_other
-    attendance = AttendanceGrade.query \
-        .with_entities(func.sum(AttendanceGrade.active + 1).label('count')) \
-        .filter(AttendanceGrade.user_id == student_id).first()
-    attendance_rating = attendance.count if attendance and attendance.count else 0
-    grade = GradeUsers.query \
-        .with_entities(func.sum(GradeUsers.value).label('count')) \
-        .filter(GradeUsers.user_id == student_id).first()
-    grade_rating = grade.count if grade and grade.count else 0
-    activity = Activity.query.with_entities(func.sum(RateActivity.value).label('count')).join(Activity.rate).filter(
-        Activity.user_id == student_id).group_by(Activity.id).first()
-    activity_rating = activity.count if activity and activity.count else 0
-    return labs_rating + attendance_rating + grade_rating + activity_rating
+        .join(Lab) \
+        .with_entities(LabsGrade.user_id,
+                       func.sum(labs_sq_xpr).label('count')) \
+        .group_by(LabsGrade.user_id).subquery()
+    labs_xpr = case([(labs_sq.c.count != None, labs_sq.c.count)],
+                    else_=0)
+    students_list = User.query \
+        .add_columns(func.sum(grade_sq_xpr + activity_xpr + attendance_xpr + labs_xpr).label('count')) \
+        .outerjoin(grade_sq, grade_sq.c.user_id == User.id) \
+        .outerjoin(activity_sq, activity_sq.c.user_id == User.id) \
+        .outerjoin(attendance_sq, attendance_sq.c.user_id == User.id) \
+        .outerjoin(labs_sq, labs_sq.c.user_id == User.id) \
+        .filter(User.group_id == group_id) \
+        .group_by(User.id) \
+        .order_by(desc('count')).all()
+    return students_list
 
 
 @deans_office.route('/activity/<string:activity_id>/group/<string:group_id>/student/<string:student_id>')

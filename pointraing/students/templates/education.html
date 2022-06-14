@@ -62,7 +62,7 @@
                             </tr>
                             </thead>
                             <tbody>
-                            {% for item in labs %}
+                                {% for item in labs %}
                                 <tr class="{{ 'table-success' if item.id else 'table-danger' }}">
                                     <th scope="row">{{ item.Lab.name }}</th>
                                     <td>{{ item.Lab.datetime.strftime('%d/%m/%Y') }}</td>
