@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, IntegerField
-from wtforms.validators import DataRequired
+from wtforms import StringField, SubmitField, IntegerField, SelectField, DateTimeLocalField
+from wtforms.validators import DataRequired, InputRequired
 
 
 class DeclineActivityForm(FlaskForm):
@@ -11,4 +11,12 @@ class DeclineActivityForm(FlaskForm):
 class SubjectForm(FlaskForm):
     name = StringField('Название', validators=[DataRequired()])
     count_hours = IntegerField('Количество часов', validators=[DataRequired()])
+    submit = SubmitField('Сохранить')
+
+
+class LabForm(FlaskForm):
+    name = StringField('Название', validators=[DataRequired()])
+    subject = SelectField('Предмет', validators=[DataRequired()])
+    datetime = DateTimeLocalField('Дата', validators=[InputRequired()], format='%Y-%m-%dT%H:%M')
+    deadline = DateTimeLocalField('Дедлайн', validators=[InputRequired()], format='%Y-%m-%dT%H:%M')
     submit = SubmitField('Сохранить')

@@ -1,10 +1,10 @@
-from flask import Blueprint, render_template, flash, redirect, url_for, request
+from flask import Blueprint, render_template, flash, redirect, url_for
 from flask_login import login_required
 from pointraing.models import Group, User, Attendance, Activity, AttendanceGrade, Lab, LabsGrade, Grade, GradeUsers, \
     TypeGrade, RateActivity, Subject
-from pointraing.main.routes import get_full_name, get_education_student_by_subject, create_id
+from pointraing.main.routes import get_full_name, get_education_student_by_subject
 from pointraing import db
-from pointraing.deans_office.forms import DeclineActivityForm, SubjectForm
+from pointraing.deans_office.forms import DeclineActivityForm
 from sqlalchemy.sql import func, case, desc
 
 deans_office = Blueprint('deans_office', __name__, template_folder='templates')
@@ -283,45 +283,27 @@ def admin(entity=None):
                            active_tab='admin')
 
 
-@deans_office.route('/admin/subject/update', methods=['GET', 'POST'])
-@deans_office.route('/admin/subject/<string:item_id>/update', methods=['GET', 'POST'])
+@deans_office.route('/admin/<string:entity>/update', methods=['GET', 'POST'])
+@deans_office.route('/admin/<string:entity>/<string:item_id>/update', methods=['GET', 'POST'])
 @login_required
-def subject_update(item_id=None):
-    subject = Subject.query.get_or_404(item_id) if item_id else None
+def entity_update(entity, item_id=None):
     import pointraing.deans_office.utils as utils
+    title = 'Добавить запись' if item_id else 'Изменить запись'
     groups = utils.get_entities()
-    form = SubjectForm()
-    title = 'Добавить предмет' if subject else 'Изменить предмет'
-    if form.validate_on_submit():
-        if subject:
-            subject.name = form.name.data
-            subject.count_hours = form.count_hours.data
-        else:
-            db.session.add(Subject(
-                id=create_id(),
-                name=form.name.data,
-                count_hours=form.count_hours.data
-            ))
-        db.session.commit()
-        flash('Предмет изменен!', 'success') if subject else flash('Предмет добавлен!', 'success')
-        return redirect(url_for('deans_office.admin', entity=utils.SUBJECT))
-    elif request.method == 'GET' and subject:
-        form.name.data = subject.name
-        form.count_hours.data = subject.count_hours
-    return render_template('subject.html',
-                           title=title,
-                           groups=groups,
-                           entity=utils.SUBJECT,
-                           form=form
-                           )
+    method = '_'.join((entity, 'update'))
+    if utils.__dict__[method]:
+        return utils.__dict__[method](item_id, title, groups)
+    else:
+        return redirect('main.home')
 
 
-@deans_office.route('/admin/subject/<string:item_id>/delete', methods=['GET'])
+@deans_office.route('/admin/<string:entity>/<string:item_id>/delete', methods=['GET'])
 @login_required
-def subject_remove(item_id):
-    subject = Subject.query.get_or_404(item_id)
-    db.session.delete(subject)
-    db.session.commit()
-    flash('Запись была удалена!', 'success')
+def entity_remove(entity, item_id):
     import pointraing.deans_office.utils as utils
-    return redirect(url_for('deans_office.admin', entity=utils.SUBJECT))
+    method = '_'.join((entity, 'remove'))
+    if utils.__dict__[method]:
+        flash('Запись была удалена!', 'success')
+        return utils.__dict__[method](item_id)
+    else:
+        return redirect('main.home')

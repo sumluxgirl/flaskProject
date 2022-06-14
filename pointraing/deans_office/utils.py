@@ -1,6 +1,9 @@
 from pointraing.models import Group, User, Attendance, ActivityType, Subject, Lab, AttendanceType, Grade, TypeGrade, \
     Role, ActivitySubType, RateActivity
-from flask import url_for
+from flask import url_for, flash, redirect, request, render_template
+from pointraing.deans_office.forms import SubjectForm, LabForm
+from pointraing import db
+from pointraing.main.routes import create_id
 
 SUBJECT = 'subject'
 LAB = 'lab'
@@ -85,7 +88,7 @@ def get_entities_values():
     }
 
 
-def admin_entities(entity_list, value, action):
+def admin_entities(entity_list, value, entity):
     entity_list_values = []
     for index, item in enumerate(entity_list):
         values = []
@@ -95,8 +98,8 @@ def admin_entities(entity_list, value, action):
             'idx': index + 1,
             'value': values,
             'action': {
-                'edit': url_for(action['edit'], item_id=item.id),
-                'delete': url_for(action['delete'], item_id=item.id)
+                'edit': url_for('deans_office.entity_update', item_id=item.id, entity=entity),
+                'delete': url_for('deans_office.entity_remove', item_id=item.id, entity=entity)
             }
         })
     return entity_list_values
@@ -109,19 +112,16 @@ def admin_simple_entity():
 
 
 def admin_subject():
-    add_url = url_for('deans_office.subject_update')
+    add_url = url_for('deans_office.entity_update', entity=SUBJECT)
     fields = ['Название', 'Количество часов']
     values = ['name', 'count_hours']
     entity_list = Subject.query.order_by(Subject.name)
-    entity_list_values = admin_entities(entity_list, values, {
-        'edit': 'deans_office.subject_update',
-        'delete': 'deans_office.subject_remove'
-    })
+    entity_list_values = admin_entities(entity_list, values, entity=SUBJECT)
     return add_url, fields, entity_list_values
 
 
 def admin_lab():
-    add_url = '#'
+    add_url = url_for('deans_office.entity_update', entity=LAB)
     fields = ['Название', 'Предмет', 'Дата', 'Дедлайн']
     entity_list = Lab.query.order_by(Lab.name)
     entity_list_values = []
@@ -131,8 +131,8 @@ def admin_lab():
             'value': [item.name, item.subject.name, item.datetime.strftime('%d/%m/%Y'),
                       item.deadline.strftime('%d/%m/%Y')],
             'action': {
-                'edit': '#',
-                'delete': '#'
+                'edit': url_for('deans_office.entity_update', item_id=item.id, entity=LAB),
+                'delete': url_for('deans_office.entity_remove', item_id=item.id, entity=LAB)
             }
         })
     return add_url, fields, entity_list_values
@@ -159,10 +159,7 @@ def admin_attendance_type():
     add_url = '#'
     fields, values = admin_simple_entity()
     entity_list = AttendanceType.query.order_by(AttendanceType.name)
-    entity_list_values = admin_entities(entity_list, values, {
-        'edit': '#',
-        'delete': '#'
-    })
+    entity_list_values = admin_entities(entity_list, values, ATTENDANCE_TYPE)
     return add_url, fields, entity_list_values
 
 
@@ -187,10 +184,7 @@ def admin_type_grade():
     add_url = '#'
     fields, values = admin_simple_entity()
     entity_list = TypeGrade.query.order_by(TypeGrade.name)
-    entity_list_values = admin_entities(entity_list, values, {
-        'edit': '#',
-        'delete': '#'
-    })
+    entity_list_values = admin_entities(entity_list, values, TYPE_GRADE)
     return add_url, fields, entity_list_values
 
 
@@ -198,10 +192,7 @@ def admin_group():
     add_url = '#'
     fields, values = admin_simple_entity()
     entity_list = Group.query.order_by(Group.name)
-    entity_list_values = admin_entities(entity_list, values, {
-        'edit': '#',
-        'delete': '#'
-    })
+    entity_list_values = admin_entities(entity_list, values, GROUP)
     return add_url, fields, entity_list_values
 
 
@@ -209,10 +200,7 @@ def admin_role():
     add_url = '#'
     fields, values = admin_simple_entity()
     entity_list = Role.query.order_by(Role.name)
-    entity_list_values = admin_entities(entity_list, values, {
-        'edit': '#',
-        'delete': '#'
-    })
+    entity_list_values = admin_entities(entity_list, values, ROLE)
     return add_url, fields, entity_list_values
 
 
@@ -238,10 +226,7 @@ def admin_activity_type():
     add_url = '#'
     fields, values = admin_simple_entity()
     entity_list = ActivityType.query.order_by(ActivityType.name)
-    entity_list_values = admin_entities(entity_list, values, {
-        'edit': '#',
-        'delete': '#'
-    })
+    entity_list_values = admin_entities(entity_list, values, ACTIVITY_TYPE)
     return add_url, fields, entity_list_values
 
 
@@ -249,10 +234,7 @@ def admin_activity_sub_type():
     add_url = '#'
     fields, values = admin_simple_entity()
     entity_list = ActivitySubType.query.order_by(ActivitySubType.name)
-    entity_list_values = admin_entities(entity_list, values, {
-        'edit': '#',
-        'delete': '#'
-    })
+    entity_list_values = admin_entities(entity_list, values, ACTIVITY_SUB_TYPE)
     return add_url, fields, entity_list_values
 
 
@@ -271,3 +253,78 @@ def admin_rate_activity():
             }
         })
     return add_url, fields, entity_list_values
+
+
+def subject_update(item_id, title, groups):
+    subject = Subject.query.get_or_404(item_id) if item_id else None
+    form = SubjectForm()
+    if form.validate_on_submit():
+        if subject:
+            subject.name = form.name.data
+            subject.count_hours = form.count_hours.data
+        else:
+            db.session.add(Subject(
+                id=create_id(),
+                name=form.name.data,
+                count_hours=form.count_hours.data
+            ))
+        db.session.commit()
+        flash('Запись изменена!', 'success') if subject else flash('Запись добавлена!', 'success')
+        return redirect(url_for('deans_office.admin', entity=SUBJECT))
+    elif request.method == 'GET' and subject:
+        form.name.data = subject.name
+        form.count_hours.data = subject.count_hours
+    return render_template('subject.html',
+                           title=title,
+                           groups=groups,
+                           entity=SUBJECT,
+                           form=form
+                           )
+
+
+def entity_remove(row, entity):
+    db.session.delete(row)
+    db.session.commit()
+    return redirect(url_for('deans_office.admin', entity=entity))
+
+
+def subject_remove(item_id):
+    return entity_remove(Subject.query.get_or_404(item_id), SUBJECT)
+
+
+def lab_update(item_id, title, groups):
+    lab = Lab.query.get_or_404(item_id) if item_id else None
+    form = LabForm()
+    form.subject.choices = [(g.id, g.name) for g in Subject.query.all()]
+    if form.validate_on_submit():
+        if lab:
+            lab.name = form.name.data
+            lab.subject_id = form.subject.data
+            lab.datetime = form.datetime.data
+            lab.deadline = form.deadline.data
+        else:
+            db.session.add(Lab(
+                id=create_id(),
+                name=form.name.data,
+                subject_id=form.subject.data,
+                datetime=form.datetime.data,
+                deadline=form.deadline.data
+            ))
+        db.session.commit()
+        flash('Запись изменена!', 'success') if item_id else flash('Запись добавлена!', 'success')
+        return redirect(url_for('deans_office.admin', entity=LAB))
+    elif request.method == 'GET' and item_id:
+        form.name.data = lab.name
+        form.subject.data = lab.subject_id
+        form.datetime.data = lab.datetime
+        form.deadline.data = lab.deadline
+    return render_template('lab.html',
+                           title=title,
+                           groups=groups,
+                           entity=LAB,
+                           form=form
+                           )
+
+
+def lab_remove(item_id):
+    return entity_remove(Lab.query.get_or_404(item_id), LAB)
