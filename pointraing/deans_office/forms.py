@@ -20,3 +20,11 @@ class LabForm(FlaskForm):
     datetime = DateTimeLocalField('Дата', validators=[InputRequired()], format='%Y-%m-%dT%H:%M')
     deadline = DateTimeLocalField('Дедлайн', validators=[InputRequired()], format='%Y-%m-%dT%H:%M')
     submit = SubmitField('Сохранить')
+
+
+class AttendanceForm(FlaskForm):
+    subject = SelectField('Предмет', validators=[DataRequired()])
+    group = SelectField('Группа', validators=[DataRequired()])
+    type = SelectField('Тип', validators=[DataRequired()])
+    date = DateTimeLocalField('Дата', validators=[InputRequired()], format='%Y-%m-%dT%H:%M')
+    submit = SubmitField('Сохранить')

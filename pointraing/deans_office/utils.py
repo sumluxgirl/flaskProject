@@ -1,7 +1,7 @@
 from pointraing.models import Group, User, Attendance, ActivityType, Subject, Lab, AttendanceType, Grade, TypeGrade, \
     Role, ActivitySubType, RateActivity
 from flask import url_for, flash, redirect, request, render_template
-from pointraing.deans_office.forms import SubjectForm, LabForm
+from pointraing.deans_office.forms import SubjectForm, LabForm, AttendanceForm
 from pointraing import db
 from pointraing.main.routes import create_id
 
@@ -139,7 +139,7 @@ def admin_lab():
 
 
 def admin_attendance():
-    add_url = '#'
+    add_url = url_for('deans_office.entity_update', entity=ATTENDANCE)
     fields = ['Предмет', 'Группа', 'Тип', 'Дата']
     entity_list = Attendance.query.order_by(Attendance.subject_id).order_by(Attendance.date)
     entity_list_values = []
@@ -148,8 +148,8 @@ def admin_attendance():
             'idx': index + 1,
             'value': [item.subject.name, item.group.name, item.type.name, item.date.strftime('%d/%m/%Y')],
             'action': {
-                'edit': '#',
-                'delete': '#'
+                'edit': url_for('deans_office.entity_update', item_id=item.id, entity=ATTENDANCE),
+                'delete': url_for('deans_office.entity_remove', item_id=item.id, entity=ATTENDANCE)
             }
         })
     return add_url, fields, entity_list_values
@@ -274,7 +274,7 @@ def subject_update(item_id, title, groups):
     elif request.method == 'GET' and subject:
         form.name.data = subject.name
         form.count_hours.data = subject.count_hours
-    return render_template('subject.html',
+    return render_template('subject_update.html',
                            title=title,
                            groups=groups,
                            entity=SUBJECT,
@@ -318,7 +318,7 @@ def lab_update(item_id, title, groups):
         form.subject.data = lab.subject_id
         form.datetime.data = lab.datetime
         form.deadline.data = lab.deadline
-    return render_template('lab.html',
+    return render_template('lab_update.html',
                            title=title,
                            groups=groups,
                            entity=LAB,
@@ -328,3 +328,43 @@ def lab_update(item_id, title, groups):
 
 def lab_remove(item_id):
     return entity_remove(Lab.query.get_or_404(item_id), LAB)
+
+
+def attendance_update(item_id, title, groups):
+    attendance = Attendance.query.get_or_404(item_id) if item_id else None
+    form = AttendanceForm()
+    form.subject.choices = [(g.id, g.name) for g in Subject.query.all()]
+    form.group.choices = [(g.id, g.name) for g in Group.query.all()]
+    form.type.choices = [(g.id, g.name) for g in AttendanceType.query.all()]
+    if form.validate_on_submit():
+        if attendance:
+            attendance.subject_id = form.subject.data
+            attendance.group_id = form.group.data
+            attendance.type_id = form.type.data
+            attendance.date = form.date.data
+        else:
+            db.session.add(Attendance(
+                id=create_id(),
+                subject_id=form.subject.data,
+                group_id=form.group.data,
+                type_id=form.type.data,
+                date=form.date.data,
+            ))
+        db.session.commit()
+        flash('Запись изменена!', 'success') if item_id else flash('Запись добавлена!', 'success')
+        return redirect(url_for('deans_office.admin', entity=ATTENDANCE))
+    elif request.method == 'GET' and item_id:
+        form.subject.data = attendance.subject_id
+        form.group.data = attendance.group_id
+        form.type.data = attendance.type_id
+        form.date.data = attendance.date
+    return render_template('attendance_admin_update.html',
+                           title=title,
+                           groups=groups,
+                           entity=ATTENDANCE,
+                           form=form
+                           )
+
+
+def attendance_remove(item_id):
+    return entity_remove(Attendance.query.get_or_404(item_id), ATTENDANCE)
