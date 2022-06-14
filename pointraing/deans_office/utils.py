@@ -104,9 +104,9 @@ def admin_subject():
     values = ['name', 'count_hours']
     entity_list = Subject.query.order_by(Subject.name)
     entity_list_values = admin_entities(entity_list, values, {
-                'edit': '#',
-                'delete': '#'
-            })
+        'edit': '#',
+        'delete': '#'
+    })
     return add_url, fields, entity_list_values
 
 

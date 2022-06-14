@@ -1,8 +1,8 @@
 from flask import Blueprint, render_template, flash, redirect, url_for
 from flask_login import current_user, login_required
 from pointraing.models import Group, User, Attendance, Activity, AttendanceGrade, Lab, LabsGrade, Grade, GradeUsers, \
-    TypeGrade, RateActivity
-from pointraing.main.routes import get_full_name
+    TypeGrade, RateActivity, Subject
+from pointraing.main.routes import get_full_name, get_education_student_by_subject
 from pointraing import db
 from pointraing.deans_office.forms import DeclineActivityForm
 from sqlalchemy.sql import func, case, desc
@@ -233,6 +233,29 @@ def activity_decline(activity_id, group_id, student_id):
                            activity_id=activity_id,
                            form=form,
                            activity=activity
+                           )
+
+
+@deans_office.route('/rating/student/<string:student_id>/subject/<string:subject_id>')
+@login_required
+def students_rating_by_subject(student_id, subject_id):
+    student = User.query.get_or_404(student_id)
+    subject = Subject.query.get_or_404(subject_id)
+    full_name = get_full_name(student)
+    subject_name = subject.name
+    attendance_count_user, count_hours, attendance, labs_count_user, labs_count, labs, grade = \
+        get_education_student_by_subject(student_id, subject_id)
+    return render_template('rating_by_subject.html',
+                           title='Рейтинг студента по предмету',
+                           full_name=full_name,
+                           subject_name=subject_name,
+                           attendance_count_user=attendance_count_user,
+                           count_hours=count_hours,
+                           attendance=attendance,
+                           labs_count_user=labs_count_user,
+                           labs_count=labs_count,
+                           labs=labs,
+                           grade=grade
                            )
 
 

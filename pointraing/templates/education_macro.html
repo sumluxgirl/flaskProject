@@ -1,0 +1,124 @@
+{% macro education_user(attendance_count_user, count_hours, attendance, labs_count_user, labs_count, labs, grade)%}
+    <div class="accordion accordion-flush" id="accordionFlushEducation">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="flush-headingOne">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#flush-collapseOne" aria-expanded="false" aria-controls="flush-collapseOne">
+                        Посещаемость {{ attendance_count_user }}/{{ count_hours }}
+                    </button>
+                </h2>
+                <div id="flush-collapseOne" class="accordion-collapse collapse" aria-labelledby="flush-headingOne"
+                     data-bs-parent="#accordionFlushEducation">
+                    <div class="accordion-body">
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th scope="col">Дата</th>
+                                <th scope="col">Тип</th>
+                                <th scope="col">Присутсвие</th>
+                                <th scope="col">Активность</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for item in attendance %}
+                                <tr class="{{ 'table-success' if item.id else 'table-danger' }}">
+                                    <th scope="row">{{ item.Attendance.date.strftime('%d/%m/%Y') }}</th>
+                                    <td>{{ item.Attendance.type.name }}</td>
+                                    <td>
+                                        {% if item.id %}
+                                            <i class="bi bi-check-lg text-success"></i>
+                                        {% else %}
+                                            <i class="bi bi-x-lg text-danger"></i>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ item.active if item.id else 0 }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="flush-headingTwo">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#flush-collapseTwo" aria-expanded="false" aria-controls="flush-collapseTwo">
+                        Защита лабораборных {{ labs_count_user }}/{{ labs_count }}
+                    </button>
+                </h2>
+                <div id="flush-collapseTwo" class="accordion-collapse collapse" aria-labelledby="flush-headingTwo"
+                     data-bs-parent="#accordionFlushEducation">
+                    <div class="accordion-body">
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th scope="col">Название</th>
+                                <th scope="col">Дата проведения</th>
+                                <th scope="col">Дедлайн сдачи</th>
+                                <th scope="col">Дата сдачи</th>
+                                <th scope="col">Баллы за сдачу вовремя</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in labs %}
+                                <tr class="{{ 'table-success' if item.id else 'table-danger' }}">
+                                    <th scope="row">{{ item.Lab.name }}</th>
+                                    <td>{{ item.Lab.datetime.strftime('%d/%m/%Y') }}</td>
+                                    <td>{{ item.Lab.deadline.strftime('%d/%m/%Y') }}</td>
+                                    <td>{{ item.date.strftime('%d/%m/%Y') if item.id }}</td>
+                                    <td>
+                                        {% if item.id %}
+                                            {% if (item.date - item.Lab.deadline).total_seconds() < 0 %}
+                                                2
+                                            {% else %}
+                                                1
+                                            {% endif %}
+                                        {% else %}
+                                            0
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="flush-headingThree">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#flush-collapseThree" aria-expanded="false"
+                            aria-controls="flush-collapseThree">
+                        Зачет/экзамен
+                    </button>
+                </h2>
+                <div id="flush-collapseThree" class="accordion-collapse collapse" aria-labelledby="flush-headingThree"
+                     data-bs-parent="#accordionFlushEducation">
+                    <div class="accordion-body">
+                        {% if grade %}
+                            <table class="table">
+                                <thead>
+                                <tr>
+                                    <th scope="col">Дата</th>
+                                    <th scope="col">Тип</th>
+                                    <th scope="col">Оценка</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for item in grade %}
+                                    <tr>
+                                        <th scope="row">{{ item.date.strftime('%d/%m/%Y') }}</th>
+                                        <td>{{ item.name }}</td>
+                                        <td>{{ item.value }}</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <p class="text-muted">Данных еще нет</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+{% endmacro %}

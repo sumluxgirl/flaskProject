@@ -4,6 +4,7 @@ from flask_login import current_user, login_required
 from pointraing.students.forms import StudentActivityForm
 from pointraing.models import Attendance, Lab, LabsGrade, GradeUsers, AttendanceGrade, ActivityType, ActivitySubType, \
     RateActivity, Activity, Grade, TypeGrade
+from pointraing.main.routes import get_education_student_by_subject
 import uuid
 import os
 import secrets
@@ -30,49 +31,18 @@ def education(subject_id=None):
                                group_id=subject_id
                                )
     else:
-        attendance_user = AttendanceGrade.query \
-            .filter(AttendanceGrade.user_id == current_user.id).subquery()
-        attendance = Attendance.query \
-            .filter(Attendance.subject_id == subject_id) \
-            .filter(Attendance.group_id == current_user.group_id) \
-            .add_columns(attendance_user.c.id, attendance_user.c.active) \
-            .outerjoin(attendance_user, Attendance.id == attendance_user.c.attendance_id) \
-            .order_by(Attendance.date).all()
-        attendance_count_user = AttendanceGrade.query \
-            .join(AttendanceGrade.attendance) \
-            .filter(Attendance.subject_id == subject_id) \
-            .filter(AttendanceGrade.user_id == current_user.id) \
-            .count()
-        labs_user_subq = LabsGrade.query \
-            .filter(LabsGrade.user_id == current_user.id).subquery()
-        labs = Lab.query \
-            .filter(Lab.subject_id == subject_id) \
-            .add_columns(labs_user_subq.c.id, labs_user_subq.c.date) \
-            .outerjoin(labs_user_subq, Lab.id == labs_user_subq.c.lab_id) \
-            .all()
-        labs_count_user = LabsGrade.query \
-            .join(Lab, LabsGrade.lab) \
-            .filter(Lab.subject_id == subject_id) \
-            .filter(LabsGrade.user_id == current_user.id) \
-            .count()
-        grade = GradeUsers.query\
-            .join(GradeUsers.grade) \
-            .join(Grade.type) \
-            .with_entities(GradeUsers.value, TypeGrade.name, Grade.date) \
-            .filter(GradeUsers.user_id == current_user.id) \
-            .filter(Grade.subject_id == subject_id)\
-            .group_by(GradeUsers.id) \
-            .all()
+        attendance_count_user, count_hours, attendance, labs_count_user, labs_count, labs, grade =\
+            get_education_student_by_subject(current_user.id, subject_id)
 
         return render_template('education.html',
                                active_tab='education',
                                right_group=subjects,
                                group_id=subject_id,
-                               count_hours=len(attendance),
+                               count_hours=count_hours,
                                attendance_count_user=attendance_count_user,
                                attendance=attendance,
                                labs=labs,
-                               labs_count=len(labs),
+                               labs_count=labs_count,
                                labs_count_user=labs_count_user,
                                grade=grade
                                )
