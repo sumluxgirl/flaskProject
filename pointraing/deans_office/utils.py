@@ -22,51 +22,39 @@ RATE_ACTIVITY = 'rate_activity'
 def get_entities():
     return [{
         'name': 'Предметы',
-        'url': '#',
         'id': SUBJECT
     }, {
         'name': 'Лабораторные работы',
-        'url': '#',
         'id': LAB
     }, {
         'name': 'Рассписание',
-        'url': '#',
         'id': ATTENDANCE
     }, {
         'name': 'Типы посешений',
-        'url': '#',
         'id': ATTENDANCE_TYPE
     }, {
         'name': 'Оценки',
-        'url': '#',
         'id': GRADE
     }, {
         'name': 'Типы оценок',
-        'url': '#',
         'id': TYPE_GRADE
     }, {
         'name': 'Группы',
-        'url': '#',
         'id': GROUP
     }, {
         'name': 'Роли',
-        'url': '#',
         'id': ROLE
     }, {
         'name': 'Пользователи',
-        'url': '#',
         'id': USER
     }, {
         'name': 'Типы активности',
-        'url': '#',
         'id': ACTIVITY_TYPE
     }, {
         'name': 'Подтипы активности',
-        'url': '#',
         'id': ACTIVITY_SUB_TYPE
     }, {
         'name': 'Рейтинг активности',
-        'url': '#',
         'id': RATE_ACTIVITY
     }]
 
