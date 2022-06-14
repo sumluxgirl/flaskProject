@@ -7,36 +7,38 @@
         {% endfor %}
     </div>
     <div class="col-md-10">
-        <a class="btn btn-outline-info mt-1" href="{{add_url}}" role="button">Добавить</a>
-        <table class="table">
-            <thead>
-            <tr>
-                <th scope="col">#</th>
-                {% for item in fields %}
-                    <th scope="col">{{ item }}</th>
-                {% endfor %}
-                <th scope="col">Действия</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for item_entity in entity_list_values %}
+        {% block entity_content %}
+            <a class="btn btn-outline-info mt-1" href="{{ add_url }}" role="button">Добавить</a>
+            <table class="table">
+                <thead>
                 <tr>
-                    <th scope="row">{{ item_entity.idx }}</th>
-                    {% for item_value in item_entity.value %}
-                        <td>{{ item_value }}</td>
+                    <th scope="col">#</th>
+                    {% for item in fields %}
+                        <th scope="col">{{ item }}</th>
                     {% endfor %}
-                    <td>
-                        <a class="btn btn-outline-info" href="{{ item_entity.action.edit }}" role="button"
-                           title="Редактировать">
-                            <i class="bi bi-pencil-fill"></i>
-                        </a>
-                        <a class="btn btn-outline-danger" href="{{ item_entity.action.delete }}" role="button"
-                           title="Удалить">
-                            <i class="bi bi-trash-fill"></i>
-                        </a>
+                    <th scope="col">Действия</th>
                 </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                {% for item_entity in entity_list_values %}
+                    <tr>
+                        <th scope="row">{{ item_entity.idx }}</th>
+                        {% for item_value in item_entity.value %}
+                            <td>{{ item_value }}</td>
+                        {% endfor %}
+                        <td>
+                            <a class="btn btn-outline-info" href="{{ item_entity.action.edit }}" role="button"
+                               title="Редактировать">
+                                <i class="bi bi-pencil-fill"></i>
+                            </a>
+                            <a class="btn btn-outline-danger" href="{{ item_entity.action.delete }}" role="button"
+                               title="Удалить">
+                                <i class="bi bi-trash-fill"></i>
+                            </a>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% endblock %}
     </div>
 {% endblock %}

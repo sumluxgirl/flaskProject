@@ -1,5 +1,6 @@
 from pointraing.models import Group, User, Attendance, ActivityType, Subject, Lab, AttendanceType, Grade, TypeGrade, \
     Role, ActivitySubType, RateActivity
+from flask import url_for
 
 SUBJECT = 'subject'
 LAB = 'lab'
@@ -93,7 +94,10 @@ def admin_entities(entity_list, value, action):
         entity_list_values.append({
             'idx': index + 1,
             'value': values,
-            'action': action
+            'action': {
+                'edit': url_for(action['edit'], item_id=item.id),
+                'delete': url_for(action['delete'], item_id=item.id)
+            }
         })
     return entity_list_values
 
@@ -105,13 +109,13 @@ def admin_simple_entity():
 
 
 def admin_subject():
-    add_url = '#'
+    add_url = url_for('deans_office.subject_update')
     fields = ['Название', 'Количество часов']
     values = ['name', 'count_hours']
     entity_list = Subject.query.order_by(Subject.name)
     entity_list_values = admin_entities(entity_list, values, {
-        'edit': '#',
-        'delete': '#'
+        'edit': 'deans_office.subject_update',
+        'delete': 'deans_office.subject_remove'
     })
     return add_url, fields, entity_list_values
 

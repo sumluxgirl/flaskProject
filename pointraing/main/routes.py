@@ -1,6 +1,7 @@
 from flask import render_template, url_for, redirect, Blueprint, send_from_directory, current_app
 from flask_login import current_user
-from pointraing.models import AttendanceGrade, Attendance, LabsGrade, Lab, GradeUsers, Grade, TypeGrade, User, Subject
+from pointraing.models import AttendanceGrade, Attendance, LabsGrade, Lab, GradeUsers, Grade, TypeGrade, User
+import uuid
 
 main = Blueprint('main', __name__, template_folder='templates')
 
@@ -46,6 +47,10 @@ def get_education_student_by_subject(student_id, subject_id):
         .all()
 
     return attendance_count_user, len(attendance), attendance, labs_count_user, len(labs), labs, grade
+
+
+def create_id():
+    return uuid.uuid4().hex
 
 
 @main.route("/")
