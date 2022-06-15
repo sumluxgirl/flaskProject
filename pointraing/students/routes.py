@@ -3,7 +3,7 @@ from flask import render_template, url_for, redirect, request, flash, abort, sen
 from flask_login import current_user, login_required
 from pointraing.students.forms import StudentActivityForm
 from pointraing.models import Attendance, ActivityType, RateActivity, Activity
-from pointraing.main.utils import get_education_student_by_subject
+from pointraing.main.utils import get_education_student_by_subject, is_student
 import uuid
 import os
 import secrets
@@ -11,10 +11,16 @@ import secrets
 students = Blueprint('students', __name__, template_folder='templates', url_prefix='/students')
 
 
+def check_on_rights():
+    if not is_student():
+        abort(403)
+
+
 @students.route("/education")
 @students.route("/education/<string:subject_id>")
 @login_required
 def education(subject_id=None):
+    check_on_rights()
     group = current_user.group
     attendance_subjects = Attendance.query.filter_by(group_id=group.id).group_by(Attendance.subject_id).all()
     subjects = []
@@ -55,16 +61,17 @@ def get_students_activity():
 @students.route("/activity/<string:activity_id>")
 @login_required
 def activity(activity_id=None):
-    activity = get_students_activity()
-    if not activity_id and len(activity) > 0:
-        activity_id = activity[0].id
+    check_on_rights()
+    activity_list = get_students_activity()
+    if not activity_id and len(activity_list) > 0:
+        activity_id = activity_list[0].id
 
     activity_by_user = Activity.query \
         .filter(Activity.user_id == current_user.id) \
         .filter(Activity.type_id == activity_id).all()
     return render_template('activity.html',
                            active_tab='activity',
-                           right_group=activity,
+                           right_group=activity_list,
                            group_id=activity_id,
                            activity_by_user=activity_by_user
                            )
@@ -101,6 +108,7 @@ def get_activity_sub_type_choices(activity_id):
 @students.route("/activity/<string:activity_id>/new", methods=['GET', 'POST'])
 @login_required
 def activity_new(activity_id):
+    check_on_rights()
     form = StudentActivityForm()
     sub_type_choices = get_activity_sub_type_choices(activity_id)
     choices = sub_type_choices['choices']
@@ -109,15 +117,14 @@ def activity_new(activity_id):
     form.sub_type_id.choices = choices
     if form.validate_on_submit():
         picture_file = save_file(form.file)
-        activity = Activity(
+        db.session.add(Activity(
             id=uuid.uuid4().hex,
             name=form.name.data,
             file=picture_file,
             user_id=current_user.id,
             type_id=activity_id,
             rate_id=sub_type_id if sub_type_id else form.sub_type_id.data
-        )
-        db.session.add(activity)
+        ))
         db.session.commit()
         flash('Ваша грамота принята на рассмотрение!', 'success')
         return redirect(url_for('students.activity', activity_id=activity_id))
@@ -133,6 +140,7 @@ def activity_new(activity_id):
 @students.route("/activity/<string:activity_id>/doc/<string:doc_id>/update", methods=['GET', 'POST'])
 @login_required
 def update_activity(activity_id, doc_id):
+    check_on_rights()
     doc = Activity.query.get_or_404(doc_id)
     if doc.user_id != current_user.id:
         abort(403)
@@ -167,6 +175,7 @@ def update_activity(activity_id, doc_id):
 @students.route("/activity/<string:activity_id>/doc/<string:doc_id>/delete", methods=['GET'])
 @login_required
 def delete_activity(activity_id, doc_id):
+    check_on_rights()
     doc = Activity.query.get_or_404(doc_id)
     if doc.user_id != current_user.id:
         abort(403)

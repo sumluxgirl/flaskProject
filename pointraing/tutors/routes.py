@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, flash, url_for, request
+from flask import Blueprint, render_template, redirect, flash, url_for, request, abort
 from flask_login import login_required
 from pointraing.models import Subject, Attendance, User, Group, AttendanceGrade, Lab, LabsGrade, Grade, GradeUsers
 from pointraing import db
@@ -7,15 +7,21 @@ from datetime import datetime
 from pointraing.tutors.forms import AttendanceGradeForm, CHOICES, IS_EXIST, NOT_EXIST, ACTIVE, GradeUserForm, \
     CHOICES_GRADE_EXAM, CHOICES_GRADE_OFFSET, LabUserForm
 import uuid
-from pointraing.main.utils import get_full_name
+from pointraing.main.utils import get_full_name, is_tutor
 
 tutors = Blueprint('tutors', __name__, template_folder='templates', url_prefix='/tutors',
                    static_folder='static')
 
 
+def check_on_rights():
+    if not is_tutor():
+        abort(403)
+
+
 @tutors.route("/subjects")
 @login_required
 def subjects():
+    check_on_rights()
     subjects_list = Subject.query.all()
     return render_template('subjects.html',
                            title="Учебные предметы",
@@ -79,6 +85,7 @@ def get_groups(subject_id, group_id=None):
 @tutors.route("/subjects/<string:subject_id>/groups/<string:group_id>")
 @login_required
 def get_attendance(subject_id, group_id=None):
+    check_on_rights()
     groups, current_group, students, attendance, subject_name, group_id = get_groups(subject_id, group_id)
     return render_template('attendance.html',
                            title="Посещение предмета",
@@ -97,6 +104,7 @@ def get_attendance(subject_id, group_id=None):
               methods=['GET', 'POST'])
 @login_required
 def attendance_grade_update(subject_id, attendance_id, group_id=None):
+    check_on_rights()
     current_attendance = Attendance.query.get_or_404(attendance_id)
     is_new = (current_attendance.date - datetime.now()).total_seconds() >= 0
     groups, current_group, students, attendance, subject_name, group_id = get_groups(subject_id, group_id)
@@ -189,6 +197,7 @@ def labs_list(subject_id, group_id=None):
 @tutors.route("/subjects/<string:subject_id>/groups/<string:group_id>/labs")
 @login_required
 def get_labs(subject_id, group_id=None):
+    check_on_rights()
     groups, group_id, students, labs, subject_name = labs_list(subject_id, group_id)
     return render_template('labs.html',
                            title="Лабораторные",
@@ -209,6 +218,7 @@ def get_labs(subject_id, group_id=None):
     methods=['GET', 'POST'])
 @login_required
 def update_lab_by_user(subject_id, lab_id, user_id, group_id=None):
+    check_on_rights()
     user = User.query.get_or_404(user_id)
     lab = Lab.query.get_or_404(lab_id)
     if not user or not lab:
@@ -287,6 +297,7 @@ def grades_lists(subject_id, group_id=None):
 @tutors.route("/subjects/<string:subject_id>/groups/<string:group_id>/grade")
 @login_required
 def get_grades(subject_id, group_id=None):
+    check_on_rights()
     groups, grades, students, group_id, subject_name = grades_lists(subject_id, group_id)
     return render_template('grades.html',
                            title="Зачет/Экзамен",
@@ -307,6 +318,7 @@ def get_grades(subject_id, group_id=None):
     methods=['GET', 'POST'])
 @login_required
 def update_grade_by_user(subject_id, grade_id, user_id, group_id=None):
+    check_on_rights()
     user = User.query.get_or_404(user_id)
     grade = Grade.query.get_or_404(grade_id)
     if not user or not grade:

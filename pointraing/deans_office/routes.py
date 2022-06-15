@@ -1,8 +1,8 @@
-from flask import Blueprint, render_template, flash, redirect, url_for
+from flask import Blueprint, render_template, flash, redirect, url_for, abort
 from flask_login import login_required
 from pointraing.models import Group, User, Attendance, Activity, AttendanceGrade, Lab, LabsGrade, Grade, GradeUsers, \
     TypeGrade, RateActivity, Subject
-from pointraing.main.utils import get_full_name, get_education_student_by_subject
+from pointraing.main.utils import get_full_name, get_education_student_by_subject, is_deans_office
 from pointraing import db
 from pointraing.deans_office.forms import DeclineActivityForm
 from sqlalchemy.sql import func, case, desc
@@ -10,11 +10,17 @@ from sqlalchemy.sql import func, case, desc
 deans_office = Blueprint('deans_office', __name__, template_folder='templates')
 
 
+def check_on_rights():
+    if not is_deans_office():
+        abort(403)
+
+
 @deans_office.route('/rating')
 @deans_office.route('/rating/group/<string:group_id>')
 @deans_office.route('/rating/group/<string:group_id>/student/<string:student_id>')
 @login_required
 def rating(group_id=None, student_id=None):
+    check_on_rights()
     groups = Group.query.order_by(Group.name).all()
     if not group_id:
         if len(groups) > 0:
@@ -205,6 +211,7 @@ def get_students_list_with_rating(group_id):
 @deans_office.route('/activity/<string:activity_id>/group/<string:group_id>/student/<string:student_id>')
 @login_required
 def activity_accept(activity_id, group_id, student_id):
+    check_on_rights()
     activity = Activity.query.get_or_404(activity_id)
     activity.status = True
     db.session.commit()
@@ -216,6 +223,7 @@ def activity_accept(activity_id, group_id, student_id):
                     methods=['GET', 'POST'])
 @login_required
 def activity_decline(activity_id, group_id, student_id):
+    check_on_rights()
     activity = Activity.query.get_or_404(activity_id)
     student = User.query.get_or_404(student_id)
     form = DeclineActivityForm()
@@ -239,6 +247,7 @@ def activity_decline(activity_id, group_id, student_id):
 @deans_office.route('/rating/student/<string:student_id>/subject/<string:subject_id>')
 @login_required
 def students_rating_by_subject(student_id, subject_id):
+    check_on_rights()
     student = User.query.get_or_404(student_id)
     subject = Subject.query.get_or_404(subject_id)
     full_name = get_full_name(student)
@@ -263,6 +272,7 @@ def students_rating_by_subject(student_id, subject_id):
 @deans_office.route('/admin/<string:entity>')
 @login_required
 def admin(entity=None):
+    check_on_rights()
     import pointraing.deans_office.utils as utils
     groups = utils.get_entities()
     if not entity:
@@ -287,6 +297,7 @@ def admin(entity=None):
 @deans_office.route('/admin/<string:entity>/<string:item_id>/update', methods=['GET', 'POST'])
 @login_required
 def entity_update(entity, item_id=None):
+    check_on_rights()
     import pointraing.deans_office.utils as utils
     title = 'Изменить запись' if item_id else 'Добавить запись'
     groups = utils.get_entities()
@@ -300,6 +311,7 @@ def entity_update(entity, item_id=None):
 @deans_office.route('/admin/<string:entity>/<string:item_id>/delete', methods=['GET'])
 @login_required
 def entity_remove(entity, item_id):
+    check_on_rights()
     import pointraing.deans_office.utils as utils
     method = '_'.join((entity, 'remove'))
     if utils.__dict__[method]:

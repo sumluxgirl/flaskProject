@@ -4,11 +4,11 @@ from wtforms.validators import DataRequired, EqualTo
 
 
 class LoginForm(FlaskForm):
-    login = StringField('Login',
+    login = StringField('Логин',
                         validators=[DataRequired()])
-    password = PasswordField('Password', validators=[DataRequired()])
-    remember = BooleanField('Remember Me')
-    submit = SubmitField('Login')
+    password = PasswordField('Пароль', validators=[DataRequired()])
+    remember = BooleanField('Запомнить меня')
+    submit = SubmitField('Войти')
 
 
 class ResetPasswordForm(FlaskForm):
