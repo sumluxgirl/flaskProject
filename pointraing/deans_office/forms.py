@@ -33,3 +33,10 @@ class AttendanceForm(FlaskForm):
 class SimpleEntityForm(FlaskForm):
     name = StringField('Название', validators=[DataRequired()])
     submit = SubmitField('Сохранить')
+
+
+class GradeForm(FlaskForm):
+    subject = SelectField('Предмет', validators=[DataRequired()])
+    type = SelectField('Тип', validators=[DataRequired()])
+    date = DateTimeLocalField('Дата', validators=[InputRequired()], format='%Y-%m-%dT%H:%M')
+    submit = SubmitField('Сохранить')

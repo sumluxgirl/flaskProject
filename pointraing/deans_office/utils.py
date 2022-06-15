@@ -1,7 +1,7 @@
 from pointraing.models import Group, User, Attendance, ActivityType, Subject, Lab, AttendanceType, Grade, TypeGrade, \
     Role, ActivitySubType, RateActivity
 from flask import url_for, flash, redirect, request, render_template
-from pointraing.deans_office.forms import SubjectForm, LabForm, AttendanceForm, SimpleEntityForm
+from pointraing.deans_office.forms import SubjectForm, LabForm, AttendanceForm, SimpleEntityForm, GradeForm
 from pointraing import db
 from pointraing.main.routes import create_id
 
@@ -152,7 +152,7 @@ def admin_attendance_type():
 
 
 def admin_grade():
-    add_url = '#'
+    add_url = url_for('deans_office.entity_update', entity=GRADE)
     fields = ['Предмет', 'Дата', 'Тип']
     entity_list = Grade.query.order_by(Grade.date)
     entity_list_values = []
@@ -161,15 +161,15 @@ def admin_grade():
             'idx': index + 1,
             'value': [item.subject.name, item.date.strftime('%d/%m/%Y'), item.type.name],
             'action': {
-                'edit': '#',
-                'delete': '#'
+                'edit': url_for('deans_office.entity_update', item_id=item.id, entity=GRADE),
+                'delete': url_for('deans_office.entity_remove', item_id=item.id, entity=GRADE)
             }
         })
     return add_url, fields, entity_list_values
 
 
 def admin_type_grade():
-    add_url = '#'
+    add_url = url_for('deans_office.entity_update', entity=TYPE_GRADE)
     fields, values = admin_simple_entity()
     entity_list = TypeGrade.query.order_by(TypeGrade.name)
     entity_list_values = admin_entities(entity_list, values, TYPE_GRADE)
@@ -177,7 +177,7 @@ def admin_type_grade():
 
 
 def admin_group():
-    add_url = '#'
+    add_url = url_for('deans_office.entity_update', entity=GROUP)
     fields, values = admin_simple_entity()
     entity_list = Group.query.order_by(Group.name)
     entity_list_values = admin_entities(entity_list, values, GROUP)
@@ -185,7 +185,7 @@ def admin_group():
 
 
 def admin_role():
-    add_url = '#'
+    add_url = url_for('deans_office.entity_update', entity=ROLE)
     fields, values = admin_simple_entity()
     entity_list = Role.query.order_by(Role.name)
     entity_list_values = admin_entities(entity_list, values, ROLE)
@@ -211,7 +211,7 @@ def admin_user():
 
 
 def admin_activity_type():
-    add_url = '#'
+    add_url = url_for('deans_office.entity_update', entity=ACTIVITY_TYPE)
     fields, values = admin_simple_entity()
     entity_list = ActivityType.query.order_by(ActivityType.name)
     entity_list_values = admin_entities(entity_list, values, ACTIVITY_TYPE)
@@ -219,7 +219,7 @@ def admin_activity_type():
 
 
 def admin_activity_sub_type():
-    add_url = '#'
+    add_url = url_for('deans_office.entity_update', entity=ACTIVITY_SUB_TYPE)
     fields, values = admin_simple_entity()
     entity_list = ActivitySubType.query.order_by(ActivitySubType.name)
     entity_list_values = admin_entities(entity_list, values, ACTIVITY_SUB_TYPE)
@@ -388,3 +388,79 @@ def attendance_type_update(item_id, title, groups):
 
 def attendance_type_remove(item_id):
     return entity_remove(AttendanceType.query.get_or_404(item_id), ATTENDANCE_TYPE)
+
+
+def grade_update(item_id, title, groups):
+    grade = Grade.query.get_or_404(item_id) if item_id else None
+    form = GradeForm()
+    form.subject.choices = [(g.id, g.name) for g in Subject.query.all()]
+    form.type.choices = [(g.id, g.name) for g in TypeGrade.query.all()]
+    if form.validate_on_submit():
+        if grade:
+            grade.subject_id = form.subject.data
+            grade.type_id = form.type.data
+            grade.date = form.date.data
+        else:
+            db.session.add(Grade(
+                id=create_id(),
+                subject_id=form.subject.data,
+                type_id=form.type.data,
+                date=form.date.data,
+            ))
+        db.session.commit()
+        flash('Запись изменена!', 'success') if item_id else flash('Запись добавлена!', 'success')
+        return redirect(url_for('deans_office.admin', entity=GRADE))
+    elif request.method == 'GET' and item_id:
+        form.subject.data = grade.subject_id
+        form.type.data = grade.type_id
+        form.date.data = grade.date
+    return render_template('grade_update.html',
+                           title=title,
+                           groups=groups,
+                           entity=GRADE,
+                           form=form
+                           )
+
+
+def grade_remove(item_id):
+    return entity_remove(Grade.query.get_or_404(item_id), GRADE)
+
+
+def type_grade_update(item_id, title, groups):
+    return simple_entity_update(item_id, title, groups, TypeGrade, TYPE_GRADE)
+
+
+def type_grade_remove(item_id):
+    return entity_remove(TypeGrade.query.get_or_404(item_id), TYPE_GRADE)
+
+
+def group_update(item_id, title, groups):
+    return simple_entity_update(item_id, title, groups, Group, GROUP)
+
+
+def group_remove(item_id):
+    return entity_remove(Group.query.get_or_404(item_id), GROUP)
+
+
+def role_update(item_id, title, groups):
+    return simple_entity_update(item_id, title, groups, Role, ROLE)
+
+
+def role_remove(item_id):
+    return entity_remove(Role.query.get_or_404(item_id), ROLE)
+
+
+def activity_type_update(item_id, title, groups):
+    return simple_entity_update(item_id, title, groups, ActivityType, ACTIVITY_TYPE)
+
+
+def activity_type_remove(item_id):
+    return entity_remove(ActivityType.query.get_or_404(item_id), ACTIVITY_TYPE)
+
+
+def activity_sub_type_update(item_id, title, groups):
+    return simple_entity_update(item_id, title, groups, ActivitySubType, ACTIVITY_SUB_TYPE)
+
+
+def activity_sub_type_remove(item_id):
+    return entity_remove(ActivitySubType.query.get_or_404(item_id), ACTIVITY_SUB_TYPE)
