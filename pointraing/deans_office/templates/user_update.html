@@ -1,18 +1,11 @@
-{% from 'fields.html' import fieldItem, submit %}
-{% extends "admin.html" %}
-{% block entity_content %}
-    <form method="POST" action="" enctype="multipart/form-data">
-        {{ form.hidden_tag() }}
-        <fieldset class="form-group">
-            <legend class="border-bottom mb-4">{{ title }}</legend>
-            {{ fieldItem(form.surname, False) }}
-            {{ fieldItem(form.name, False) }}
-            {{ fieldItem(form.patronymic, False) }}
-            {{ fieldItem(form.login, False) }}
-            {{ fieldItem(form.password, False) }}
-            {{ fieldItem(form.role, True) }}
-            {{ fieldItem(form.group, True) }}
-        </fieldset>
-        {{ submit(form.submit) }}
-    </form>
+{% from 'fields.html' import fieldItem %}
+{% extends "admin_update.html" %}
+{% block fieldset %}
+    {{ fieldItem(form.surname, False) }}
+    {{ fieldItem(form.name, False) }}
+    {{ fieldItem(form.patronymic, False) }}
+    {{ fieldItem(form.login, False) }}
+    {{ fieldItem(form.password, False) }}
+    {{ fieldItem(form.role, True) }}
+    {{ fieldItem(form.group, True) }}
 {% endblock %}

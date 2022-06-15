@@ -1,12 +1,5 @@
-{% from 'fields.html' import fieldItem, submit %}
-{% extends "admin.html" %}
-{% block entity_content %}
-    <form method="POST" action="" enctype="multipart/form-data">
-        {{ form.hidden_tag() }}
-        <fieldset class="form-group">
-            <legend class="border-bottom mb-4">{{ title }}</legend>
-            {{ fieldItem(form.name, False) }}
-        </fieldset>
-        {{ submit(form.submit) }}
-    </form>
+{% from 'fields.html' import fieldItem %}
+{% extends "admin_update.html" %}
+{% block fieldset %}
+    {{ fieldItem(form.name, False) }}
 {% endblock %}
