@@ -77,6 +77,17 @@ def get_entities_values():
     }
 
 
+def get_url_action(item_id, entity):
+    return {
+        'edit': url_for('deans_office.entity_update', item_id=item_id, entity=entity),
+        'delete': url_for('deans_office.entity_remove', item_id=item_id, entity=entity)
+    }
+
+
+def get_add_url(entity):
+    return url_for('deans_office.entity_update', entity=entity)
+
+
 def admin_entities(entity_list, value, entity):
     entity_list_values = []
     for index, item in enumerate(entity_list):
@@ -86,31 +97,32 @@ def admin_entities(entity_list, value, entity):
         entity_list_values.append({
             'idx': index + 1,
             'value': values,
-            'action': {
-                'edit': url_for('deans_office.entity_update', item_id=item.id, entity=entity),
-                'delete': url_for('deans_office.entity_remove', item_id=item.id, entity=entity)
-            }
+            'action': get_url_action(item_id=item.id, entity=entity)
         })
     return entity_list_values
 
 
-def admin_simple_entity():
+def admin_simple_entity(entity, entity_list):
+    add_url = get_add_url(entity)
     fields = ['Название']
     values = ['name']
-    return fields, values
+    entity_list_values = admin_entities(entity_list, values, entity)
+    return add_url, fields, entity_list_values
 
 
 def admin_subject():
-    add_url = url_for('deans_office.entity_update', entity=SUBJECT)
+    entity = SUBJECT
+    add_url = get_add_url(entity)
     fields = ['Название', 'Количество часов']
     values = ['name', 'count_hours']
     entity_list = Subject.query.order_by(Subject.name)
-    entity_list_values = admin_entities(entity_list, values, entity=SUBJECT)
+    entity_list_values = admin_entities(entity_list, values, entity)
     return add_url, fields, entity_list_values
 
 
 def admin_lab():
-    add_url = url_for('deans_office.entity_update', entity=LAB)
+    entity = LAB
+    add_url = get_add_url(entity)
     fields = ['Название', 'Предмет', 'Дата', 'Дедлайн']
     entity_list = Lab.query.order_by(Lab.name)
     entity_list_values = []
@@ -119,16 +131,14 @@ def admin_lab():
             'idx': index + 1,
             'value': [item.name, item.subject.name, item.datetime.strftime('%d/%m/%Y'),
                       item.deadline.strftime('%d/%m/%Y')],
-            'action': {
-                'edit': url_for('deans_office.entity_update', item_id=item.id, entity=LAB),
-                'delete': url_for('deans_office.entity_remove', item_id=item.id, entity=LAB)
-            }
+            'action': get_url_action(item.id, entity)
         })
     return add_url, fields, entity_list_values
 
 
 def admin_attendance():
-    add_url = url_for('deans_office.entity_update', entity=ATTENDANCE)
+    entity = ATTENDANCE
+    add_url = get_add_url(entity)
     fields = ['Предмет', 'Группа', 'Тип', 'Дата']
     entity_list = Attendance.query.order_by(Attendance.subject_id).order_by(Attendance.date)
     entity_list_values = []
@@ -136,24 +146,20 @@ def admin_attendance():
         entity_list_values.append({
             'idx': index + 1,
             'value': [item.subject.name, item.group.name, item.type.name, item.date.strftime('%d/%m/%Y')],
-            'action': {
-                'edit': url_for('deans_office.entity_update', item_id=item.id, entity=ATTENDANCE),
-                'delete': url_for('deans_office.entity_remove', item_id=item.id, entity=ATTENDANCE)
-            }
+            'action': get_url_action(item.id, entity)
         })
     return add_url, fields, entity_list_values
 
 
 def admin_attendance_type():
-    add_url = url_for('deans_office.entity_update', entity=ATTENDANCE_TYPE)
-    fields, values = admin_simple_entity()
+    entity = ATTENDANCE_TYPE
     entity_list = AttendanceType.query.order_by(AttendanceType.name)
-    entity_list_values = admin_entities(entity_list, values, ATTENDANCE_TYPE)
-    return add_url, fields, entity_list_values
+    return admin_simple_entity(entity, entity_list)
 
 
 def admin_grade():
-    add_url = url_for('deans_office.entity_update', entity=GRADE)
+    entity = GRADE
+    add_url = get_add_url(entity)
     fields = ['Предмет', 'Дата', 'Тип']
     entity_list = Grade.query.order_by(Grade.date)
     entity_list_values = []
@@ -161,40 +167,32 @@ def admin_grade():
         entity_list_values.append({
             'idx': index + 1,
             'value': [item.subject.name, item.date.strftime('%d/%m/%Y'), item.type.name],
-            'action': {
-                'edit': url_for('deans_office.entity_update', item_id=item.id, entity=GRADE),
-                'delete': url_for('deans_office.entity_remove', item_id=item.id, entity=GRADE)
-            }
+            'action': get_url_action(item.id, entity)
         })
     return add_url, fields, entity_list_values
 
 
 def admin_type_grade():
-    add_url = url_for('deans_office.entity_update', entity=TYPE_GRADE)
-    fields, values = admin_simple_entity()
+    entity = TYPE_GRADE
     entity_list = TypeGrade.query.order_by(TypeGrade.name)
-    entity_list_values = admin_entities(entity_list, values, TYPE_GRADE)
-    return add_url, fields, entity_list_values
+    return admin_simple_entity(entity, entity_list)
 
 
 def admin_group():
-    add_url = url_for('deans_office.entity_update', entity=GROUP)
-    fields, values = admin_simple_entity()
+    entity = GROUP
     entity_list = Group.query.order_by(Group.name)
-    entity_list_values = admin_entities(entity_list, values, GROUP)
-    return add_url, fields, entity_list_values
+    return admin_simple_entity(entity, entity_list)
 
 
 def admin_role():
-    add_url = url_for('deans_office.entity_update', entity=ROLE)
-    fields, values = admin_simple_entity()
+    entity = ROLE
     entity_list = Role.query.order_by(Role.name)
-    entity_list_values = admin_entities(entity_list, values, ROLE)
-    return add_url, fields, entity_list_values
+    return admin_simple_entity(entity, entity_list)
 
 
 def admin_user():
-    add_url = url_for('deans_office.entity_update', entity=USER)
+    entity = USER
+    add_url = get_add_url(entity)
     fields = ['Имя', 'Фамилия', 'Отчество', 'Логин', 'Роль', 'Группа']
     entity_list = User.query.order_by(User.role_id)
     entity_list_values = []
@@ -203,32 +201,26 @@ def admin_user():
             'idx': index + 1,
             'value': [item.name, item.surname, item.patronymic, item.login, item.role.name,
                       item.group.name if item.group else ''],
-            'action': {
-                'edit': url_for('deans_office.entity_update', item_id=item.id, entity=USER),
-                'delete': url_for('deans_office.entity_remove', item_id=item.id, entity=USER)
-            }
+            'action': get_url_action(item.id, entity)
         })
     return add_url, fields, entity_list_values
 
 
 def admin_activity_type():
-    add_url = url_for('deans_office.entity_update', entity=ACTIVITY_TYPE)
-    fields, values = admin_simple_entity()
+    entity = ACTIVITY_TYPE
     entity_list = ActivityType.query.order_by(ActivityType.name)
-    entity_list_values = admin_entities(entity_list, values, ACTIVITY_TYPE)
-    return add_url, fields, entity_list_values
+    return admin_simple_entity(entity, entity_list)
 
 
 def admin_activity_sub_type():
-    add_url = url_for('deans_office.entity_update', entity=ACTIVITY_SUB_TYPE)
-    fields, values = admin_simple_entity()
+    entity = ACTIVITY_SUB_TYPE
     entity_list = ActivitySubType.query.order_by(ActivitySubType.name)
-    entity_list_values = admin_entities(entity_list, values, ACTIVITY_SUB_TYPE)
-    return add_url, fields, entity_list_values
+    return admin_simple_entity(entity, entity_list)
 
 
 def admin_rate_activity():
-    add_url = url_for('deans_office.entity_update', entity=RATE_ACTIVITY)
+    entity = RATE_ACTIVITY
+    add_url = get_add_url(entity)
     fields = ['Тип', 'Подтип', 'Балл']
     entity_list = RateActivity.query.order_by(RateActivity.activity_type_id)
     entity_list_values = []
@@ -236,10 +228,7 @@ def admin_rate_activity():
         entity_list_values.append({
             'idx': index + 1,
             'value': [item.type.name, item.sub_type.name if item.sub_type else '', item.value],
-            'action': {
-                'edit': url_for('deans_office.entity_update', item_id=item.id, entity=RATE_ACTIVITY),
-                'delete': url_for('deans_office.entity_remove', item_id=item.id, entity=RATE_ACTIVITY)
-            }
+            'action': get_url_action(item.id, entity)
         })
     return add_url, fields, entity_list_values
 
