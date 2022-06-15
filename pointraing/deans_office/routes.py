@@ -288,7 +288,7 @@ def admin(entity=None):
 @login_required
 def entity_update(entity, item_id=None):
     import pointraing.deans_office.utils as utils
-    title = 'Добавить запись' if item_id else 'Изменить запись'
+    title = 'Изменить запись' if item_id else 'Добавить запись'
     groups = utils.get_entities()
     method = '_'.join((entity, 'update'))
     if utils.__dict__[method]:

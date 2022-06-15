@@ -1,7 +1,7 @@
 from pointraing.models import Group, User, Attendance, ActivityType, Subject, Lab, AttendanceType, Grade, TypeGrade, \
     Role, ActivitySubType, RateActivity
 from flask import url_for, flash, redirect, request, render_template
-from pointraing.deans_office.forms import SubjectForm, LabForm, AttendanceForm
+from pointraing.deans_office.forms import SubjectForm, LabForm, AttendanceForm, SimpleEntityForm
 from pointraing import db
 from pointraing.main.routes import create_id
 
@@ -144,7 +144,7 @@ def admin_attendance():
 
 
 def admin_attendance_type():
-    add_url = '#'
+    add_url = url_for('deans_office.entity_update', entity=ATTENDANCE_TYPE)
     fields, values = admin_simple_entity()
     entity_list = AttendanceType.query.order_by(AttendanceType.name)
     entity_list_values = admin_entities(entity_list, values, ATTENDANCE_TYPE)
@@ -153,7 +153,7 @@ def admin_attendance_type():
 
 def admin_grade():
     add_url = '#'
-    fields = ['Предмет', 'Тип', 'Дата']
+    fields = ['Предмет', 'Дата', 'Тип']
     entity_list = Grade.query.order_by(Grade.date)
     entity_list_values = []
     for index, item in enumerate(entity_list):
@@ -356,3 +356,35 @@ def attendance_update(item_id, title, groups):
 
 def attendance_remove(item_id):
     return entity_remove(Attendance.query.get_or_404(item_id), ATTENDANCE)
+
+
+def simple_entity_update(item_id, title, groups, model, type):
+    entity = model.query.get_or_404(item_id) if item_id else None
+    form = SimpleEntityForm()
+    if form.validate_on_submit():
+        if entity:
+            entity.name = form.name.data
+        else:
+            db.session.add(model(
+                id=create_id(),
+                name=form.name.data
+            ))
+        db.session.commit()
+        flash('Запись изменена!', 'success') if item_id else flash('Запись добавлена!', 'success')
+        return redirect(url_for('deans_office.admin', entity=type))
+    elif request.method == 'GET' and item_id:
+        form.name.data = entity.name
+    return render_template('entity_update.html',
+                           title=title,
+                           groups=groups,
+                           entity=type,
+                           form=form
+                           )
+
+
+def attendance_type_update(item_id, title, groups):
+    return simple_entity_update(item_id, title, groups, AttendanceType, ATTENDANCE_TYPE)
+
+
+def attendance_type_remove(item_id):
+    return entity_remove(AttendanceType.query.get_or_404(item_id), ATTENDANCE_TYPE)

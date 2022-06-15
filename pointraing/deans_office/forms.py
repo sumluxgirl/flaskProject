@@ -28,3 +28,8 @@ class AttendanceForm(FlaskForm):
     type = SelectField('Тип', validators=[DataRequired()])
     date = DateTimeLocalField('Дата', validators=[InputRequired()], format='%Y-%m-%dT%H:%M')
     submit = SubmitField('Сохранить')
+
+
+class SimpleEntityForm(FlaskForm):
+    name = StringField('Название', validators=[DataRequired()])
+    submit = SubmitField('Сохранить')
