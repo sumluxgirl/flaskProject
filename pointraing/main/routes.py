@@ -5,6 +5,10 @@ import uuid
 
 main = Blueprint('main', __name__, template_folder='templates')
 
+ROLE_STUDENT = 'b1cefe7269bd40bc97f74f0bcbcb5797'
+ROLE_TUTOR = '45fbe5b876c740a98d11348ac6d43f92'
+ROLE_DECANAT = 'f089ec17107041868d18827b3e5e1b53'
+
 
 def get_full_name(item):
     return ' '.join([item.surname, item.name, item.patronymic])
@@ -58,11 +62,11 @@ def create_id():
 def home():
     if not current_user.is_authenticated:
         return redirect(url_for('users.login'))
-    if current_user.role.name == 'Студент':
+    if current_user.role.id == ROLE_STUDENT:
         return redirect(url_for('students.education'))
-    elif current_user.role.name == 'Преподаватель':
+    elif current_user.role.id == ROLE_TUTOR:
         return redirect(url_for('tutors.subjects'))
-    elif current_user.role.name == 'Деканат':
+    elif current_user.role.id == ROLE_DECANAT:
         return redirect(url_for('deans_office.rating'))
     return render_template('home.html')
 

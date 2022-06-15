@@ -1,9 +1,10 @@
 from pointraing.models import Group, User, Attendance, ActivityType, Subject, Lab, AttendanceType, Grade, TypeGrade, \
     Role, ActivitySubType, RateActivity
 from flask import url_for, flash, redirect, request, render_template
-from pointraing.deans_office.forms import SubjectForm, LabForm, AttendanceForm, SimpleEntityForm, GradeForm
-from pointraing import db
-from pointraing.main.routes import create_id
+from pointraing.deans_office.forms import SubjectForm, LabForm, AttendanceForm, SimpleEntityForm, GradeForm, UserForm, \
+    RateActivityForm
+from pointraing import db, bcrypt
+from pointraing.main.routes import create_id, ROLE_STUDENT
 
 SUBJECT = 'subject'
 LAB = 'lab'
@@ -193,7 +194,7 @@ def admin_role():
 
 
 def admin_user():
-    add_url = '#'
+    add_url = url_for('deans_office.entity_update', entity=USER)
     fields = ['Имя', 'Фамилия', 'Отчество', 'Логин', 'Роль', 'Группа']
     entity_list = User.query.order_by(User.role_id)
     entity_list_values = []
@@ -203,8 +204,8 @@ def admin_user():
             'value': [item.name, item.surname, item.patronymic, item.login, item.role.name,
                       item.group.name if item.group else ''],
             'action': {
-                'edit': '#',
-                'delete': '#'
+                'edit': url_for('deans_office.entity_update', item_id=item.id, entity=USER),
+                'delete': url_for('deans_office.entity_remove', item_id=item.id, entity=USER)
             }
         })
     return add_url, fields, entity_list_values
@@ -227,7 +228,7 @@ def admin_activity_sub_type():
 
 
 def admin_rate_activity():
-    add_url = '#'
+    add_url = url_for('deans_office.entity_update', entity=RATE_ACTIVITY)
     fields = ['Тип', 'Подтип', 'Балл']
     entity_list = RateActivity.query.order_by(RateActivity.activity_type_id)
     entity_list_values = []
@@ -236,8 +237,8 @@ def admin_rate_activity():
             'idx': index + 1,
             'value': [item.type.name, item.sub_type.name if item.sub_type else '', item.value],
             'action': {
-                'edit': '#',
-                'delete': '#'
+                'edit': url_for('deans_office.entity_update', item_id=item.id, entity=RATE_ACTIVITY),
+                'delete': url_for('deans_office.entity_remove', item_id=item.id, entity=RATE_ACTIVITY)
             }
         })
     return add_url, fields, entity_list_values
@@ -464,3 +465,92 @@ def activity_sub_type_update(item_id, title, groups):
 
 def activity_sub_type_remove(item_id):
     return entity_remove(ActivitySubType.query.get_or_404(item_id), ACTIVITY_SUB_TYPE)
+
+
+def user_update(item_id, title, groups):
+    user = User.query.get_or_404(item_id) if item_id else None
+    form = UserForm()
+    form.role.choices = [(g.id, g.name) for g in Role.query.all()]
+    form.group.choices = [(g.id, g.name) for g in Group.query.all()]
+    if not item_id:
+        from wtforms.validators import DataRequired
+        form.password.validators = [DataRequired()]
+    if form.validate_on_submit():
+        if user:
+            if form.password.data:
+                hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+                user.password = hashed_password
+            user.surname = form.surname.data
+            user.name = form.name.data
+            user.patronymic = form.patronymic.data
+            user.login = form.login.data
+            user.role_id = form.role.data
+            user.group_id = form.group.data if form.role.data == ROLE_STUDENT else None
+        else:
+            hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+            db.session.add(User(
+                id=create_id(),
+                surname=form.surname.data,
+                name=form.name.data,
+                patronymic=form.patronymic.data,
+                login=form.login.data,
+                password=hashed_password,
+                role_id=form.role.data,
+                group_id=form.group.data if form.role.data == ROLE_STUDENT else None
+            ))
+        db.session.commit()
+        flash('Запись изменена!', 'success') if item_id else flash('Запись добавлена!', 'success')
+        return redirect(url_for('deans_office.admin', entity=USER))
+    elif request.method == 'GET' and item_id:
+        form.surname.data = user.surname
+        form.name.data = user.name
+        form.patronymic.data = user.patronymic
+        form.login.data = user.login
+        form.role.data = user.role_id
+        form.group.data = user.group_id if form.role.data == ROLE_STUDENT else None
+    return render_template('user_update.html',
+                           title=title,
+                           groups=groups,
+                           entity=USER,
+                           form=form
+                           )
+
+
+def user_remove(item_id):
+    return entity_remove(User.query.get_or_404(item_id), USER)
+
+
+def rate_activity_update(item_id, title, groups):
+    rate = RateActivity.query.get_or_404(item_id) if item_id else None
+    form = RateActivityForm()
+    form.type.choices = [(g.id, g.name) for g in ActivityType.query.all()]
+    form.sub_type.choices = [(g.id, g.name) for g in ActivitySubType.query.all()]
+    if form.validate_on_submit():
+        if rate:
+            rate.activity_type_id = form.type.data
+            rate.activity_sub_type_id = form.sub_type.data
+            rate.value = form.value.data
+        else:
+            db.session.add(RateActivity(
+                id=create_id(),
+                activity_type_id=form.type.data,
+                activity_sub_type_id=form.sub_type.data,
+                value=form.value.data
+            ))
+        db.session.commit()
+        flash('Запись изменена!', 'success') if item_id else flash('Запись добавлена!', 'success')
+        return redirect(url_for('deans_office.admin', entity=RATE_ACTIVITY))
+    elif request.method == 'GET' and item_id:
+        form.type.data = rate.activity_type_id
+        form.sub_type.data = rate.activity_sub_type_id
+        form.value.data = rate.value
+    return render_template('rate_activity_update.html',
+                           title=title,
+                           groups=groups,
+                           entity=RATE_ACTIVITY,
+                           form=form
+                           )
+
+
+def rate_activity_remove(item_id):
+    return entity_remove(RateActivity.query.get_or_404(item_id), RATE_ACTIVITY)
