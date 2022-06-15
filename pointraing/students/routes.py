@@ -2,9 +2,8 @@ from pointraing import db
 from flask import render_template, url_for, redirect, request, flash, abort, send_from_directory, current_app, Blueprint
 from flask_login import current_user, login_required
 from pointraing.students.forms import StudentActivityForm
-from pointraing.models import Attendance, Lab, LabsGrade, GradeUsers, AttendanceGrade, ActivityType, ActivitySubType, \
-    RateActivity, Activity, Grade, TypeGrade
-from pointraing.main.routes import get_education_student_by_subject
+from pointraing.models import Attendance, ActivityType, RateActivity, Activity
+from pointraing.main.utils import get_education_student_by_subject
 import uuid
 import os
 import secrets
@@ -31,7 +30,7 @@ def education(subject_id=None):
                                group_id=subject_id
                                )
     else:
-        attendance_count_user, count_hours, attendance, labs_count_user, labs_count, labs, grade =\
+        attendance_count_user, count_hours, attendance, labs_count_user, labs_count, labs, grade = \
             get_education_student_by_subject(current_user.id, subject_id)
 
         return render_template('education.html',
@@ -175,4 +174,3 @@ def delete_activity(activity_id, doc_id):
     db.session.commit()
     flash('Ваша грамота была удалена!', 'success')
     return redirect(url_for('students.activity', activity_id=activity_id))
-

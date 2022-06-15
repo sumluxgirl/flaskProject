@@ -7,7 +7,7 @@ from datetime import datetime
 from pointraing.tutors.forms import AttendanceGradeForm, CHOICES, IS_EXIST, NOT_EXIST, ACTIVE, GradeUserForm, \
     CHOICES_GRADE_EXAM, CHOICES_GRADE_OFFSET, LabUserForm
 import uuid
-from pointraing.main.routes import get_full_name
+from pointraing.main.utils import get_full_name
 
 tutors = Blueprint('tutors', __name__, template_folder='templates', url_prefix='/tutors',
                    static_folder='static')

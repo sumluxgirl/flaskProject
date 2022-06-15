@@ -4,7 +4,7 @@ from flask import url_for, flash, redirect, request, render_template
 from pointraing.deans_office.forms import SubjectForm, LabForm, AttendanceForm, SimpleEntityForm, GradeForm, UserForm, \
     RateActivityForm
 from pointraing import db, bcrypt
-from pointraing.main.routes import create_id, ROLE_STUDENT
+from pointraing.main.utils import create_id, ROLE_STUDENT
 
 SUBJECT = 'subject'
 LAB = 'lab'

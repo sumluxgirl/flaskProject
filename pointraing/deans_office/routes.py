@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, flash, redirect, url_for
 from flask_login import login_required
 from pointraing.models import Group, User, Attendance, Activity, AttendanceGrade, Lab, LabsGrade, Grade, GradeUsers, \
     TypeGrade, RateActivity, Subject
-from pointraing.main.routes import get_full_name, get_education_student_by_subject
+from pointraing.main.utils import get_full_name, get_education_student_by_subject
 from pointraing import db
 from pointraing.deans_office.forms import DeclineActivityForm
 from sqlalchemy.sql import func, case, desc
