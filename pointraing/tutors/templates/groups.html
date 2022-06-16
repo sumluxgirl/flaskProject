@@ -28,6 +28,9 @@
                 {{ pageItem('Зачет / Экзамен',
                         url_for('tutors.get_grades', subject_id=subject_id, group_id=group_id),
                         active_tab == 'grade') }}
+                {{ pageItem('Аналитика / Автомат',
+                        url_for('tutors.get_auto_grades', subject_id=subject_id, group_id=group_id),
+                        active_tab == 'auto_grades') }}
             </ul>
             <div class="row">
                 {% if students %}

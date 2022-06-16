@@ -5,6 +5,9 @@ ROLE_STUDENT = 'b1cefe7269bd40bc97f74f0bcbcb5797'
 ROLE_TUTOR = '45fbe5b876c740a98d11348ac6d43f92'
 ROLE_DECANAT = 'f089ec17107041868d18827b3e5e1b53'
 
+EXAM_ID = 'ee4213bae38f44989f9716b6fccd440e'
+OFFSET_ID = 'a7f586cca2bf41f2846de0bb67bc2109'
+
 
 def is_student():
     return current_user.role.id == ROLE_STUDENT
@@ -64,3 +67,35 @@ def get_education_student_by_subject(student_id, subject_id):
         .all()
 
     return attendance_count_user, len(attendance), attendance, labs_count_user, len(labs), labs, grade
+
+
+def auto_grade_user_by_subject(user_id, subject_id):
+    from pointraing.models import AttendanceGrade, Attendance, LabsGrade, Lab, GradeUsers, Grade, TypeGrade, User
+    from sqlalchemy.sql import func, case
+    user = User.query.get_or_404(user_id)
+    group_id = user.group_id
+    attendance = Attendance.query \
+        .with_entities(Attendance.id) \
+        .filter(Attendance.subject_id == subject_id) \
+        .filter(Attendance.group_id == group_id)
+    attendance_user = AttendanceGrade.query \
+        .filter(AttendanceGrade.attendance_id.in_(attendance)) \
+        .filter(AttendanceGrade.user_id == user_id)
+    max_attendance_count = attendance.count()
+    attendance_user_count = attendance_user.count()
+
+    attendance_active_user = attendance_user \
+        .with_entities(func.sum(case([(AttendanceGrade.active, AttendanceGrade.active)], else_=0)).label('count')) \
+        .group_by(AttendanceGrade.user_id).first()
+    attendance_active_user_count = attendance_active_user.count if attendance_active_user else 0
+    lab = Lab.query \
+        .with_entities(Lab.id, Lab.deadline) \
+        .filter(Lab.subject_id == subject_id)
+    labs_sq_xpr = case([(LabsGrade.date < Lab.deadline, 2)], else_=1)
+    max_lab_count = lab.count() * 2
+    lab_user = LabsGrade.query.with_entities(func.sum(labs_sq_xpr).label('count')) \
+        .join(Lab)\
+        .filter(LabsGrade.user_id == user_id)\
+        .group_by(LabsGrade.id).first()
+    lab_user_count = lab_user.count if lab_user else 0
+    print(max_attendance_count, attendance_user_count, attendance_active_user_count, max_lab_count, lab_user_count)

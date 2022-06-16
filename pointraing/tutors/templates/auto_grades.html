@@ -1,0 +1,32 @@
+{% extends "groups.html" %}
+{% block stylesheet %}
+    <link rel="stylesheet" type="text/css" href="{{ url_for('tutors.static', filename='grade.css') }}">
+{% endblock %}
+{% block thead %}
+    {% for item in grades %}
+        <th scope="col">
+            {{ item.type.name }}: {{ item.date.strftime('%d/%m') }}
+        </th>
+    {% endfor %}
+{% endblock %}
+{% block tbody_td %}
+    {% for item_grade in grades %}
+        {% if item.exam or item.offset %}
+            <td class="bg-success bg-opacity-10">
+                <a href="#">
+                    {% if item_grade.type.id == OFFSET_ID %}
+                        {% if item.offset %}
+                            Зачет
+                        {% endif %}
+                    {% elif item_grade.type.id == EXAM_ID %}
+                        {% if item.exam %}
+                            {{ item.exam }}
+                        {% endif %}
+                    {% endif %}
+                </a>
+            </td>
+        {% else %}
+            <td></td>
+        {% endif %}
+    {% endfor %}
+{% endblock %}

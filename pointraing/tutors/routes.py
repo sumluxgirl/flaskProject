@@ -7,7 +7,7 @@ from datetime import datetime
 from pointraing.tutors.forms import AttendanceGradeForm, CHOICES, IS_EXIST, NOT_EXIST, ACTIVE, GradeUserForm, \
     CHOICES_GRADE_EXAM, CHOICES_GRADE_OFFSET, LabUserForm
 import uuid
-from pointraing.main.utils import get_full_name, is_tutor
+from pointraing.main.utils import get_full_name, is_tutor, EXAM_ID, OFFSET_ID
 
 tutors = Blueprint('tutors', __name__, template_folder='templates', url_prefix='/tutors',
                    static_folder='static')
@@ -272,14 +272,16 @@ def grades_lists(subject_id, group_id=None):
     grades = Grade.query \
         .filter(Grade.subject_id == subject_id).order_by(Grade.date)
     grades_sq = Grade.query.with_entities(Grade.id) \
-        .filter(Grade.subject_id == subject_id)
+        .filter(Grade.subject_id == subject_id).subquery()
+
     for item in students_list:
+        user_id = item.id
         student = {
-            'id': item.id,
+            'id': user_id,
             'name': get_full_name(item)
         }
         grade_users = GradeUsers.query \
-            .filter(GradeUsers.user_id == item.id) \
+            .filter(GradeUsers.user_id == user_id) \
             .filter(GradeUsers.grade_id.in_(grades_sq)).all()
         for grade_item in grade_users:
             student.update({
@@ -290,6 +292,73 @@ def grades_lists(subject_id, group_id=None):
             })
         students.append(student)
 
+    return groups, grades, students, group_id, subject_name
+
+
+def get_auto_grades_list(subject_id, group_id=None):
+    from sqlalchemy.sql import func, case, and_, desc
+    groups, current_group, students_list, group_id, subject_name = get_main_lists(subject_id, group_id)
+    grades = Grade.query \
+        .filter(Grade.subject_id == subject_id).order_by(Grade.date)
+    students = []
+    attendance_sq = Attendance.query \
+        .with_entities(Attendance.id) \
+        .filter(Attendance.subject_id == subject_id) \
+        .filter(Attendance.group_id == group_id)
+    attendance_grade_sq = AttendanceGrade.query \
+        .with_entities(AttendanceGrade.id, AttendanceGrade.user_id, AttendanceGrade.active) \
+        .filter(AttendanceGrade.attendance_id.in_(attendance_sq)).subquery()
+    attendance_user_xpr = case([(attendance_grade_sq.c.id.is_not(None), 1)], else_=0)
+    attendance_active_user_xpr = case([(attendance_grade_sq.c.active.is_not(None), attendance_grade_sq.c.active)],
+                                      else_=0)
+    labs_sq_xpr = case([(LabsGrade.date < Lab.deadline, 1)], else_=0)
+    lab_grade_sq = LabsGrade.query \
+        .with_entities(LabsGrade.user_id,
+                       func.sum(labs_sq_xpr).label('in_time_count'),
+                       func.count(LabsGrade.id).label('count')
+                       ) \
+        .join(Lab) \
+        .filter(Lab.subject_id == subject_id) \
+        .group_by(LabsGrade.user_id).subquery()
+    max_attendance_count = attendance_sq.count()
+    max_lab_count = Lab.query.filter(Lab.subject_id == subject_id).count()
+    attendance_count = func.sum(attendance_user_xpr).label('attendance_count')
+    attendance_active_count = func.sum(attendance_active_user_xpr).label('attendance_active_count')
+    lab_in_time_count = lab_grade_sq.c.in_time_count.label('lab_in_time_count')
+    lab_count = lab_grade_sq.c.count.label('lab_count')
+    attendance_count_user = attendance_count * 100 / max_attendance_count
+    attendance_active_count_user = attendance_active_count * 100 / max_attendance_count
+    lab_in_time_user_count = lab_in_time_count * 100 / max_lab_count
+    excellent_xpr = case([(and_(attendance_count_user >= 75,
+                                attendance_active_count_user >= 50,
+                                lab_in_time_user_count == 100), 5)], else_=0)
+    good_xpr = case([(and_(attendance_count_user >= 60,
+                           attendance_active_count_user >= 30,
+                           lab_in_time_user_count >= 50), 4)], else_=0)
+    adequately_xpr = case([(and_(attendance_count_user >= 50,
+                                 attendance_active_count_user >= 10,
+                                 lab_count / max_lab_count == 1), 3)], else_=0)
+    offset_xpr = case([(and_(attendance_count_user >= 60,
+                             attendance_active_count_user >= 40,
+                             lab_in_time_user_count >= 50), 1)], else_=0)
+    grade_xpr = func.max(excellent_xpr, good_xpr, adequately_xpr)
+    students_list_with_grade = User.query \
+        .add_columns(grade_xpr.label('exam'), offset_xpr.label('offset')) \
+        .filter(User.group_id == group_id) \
+        .outerjoin(attendance_grade_sq, attendance_grade_sq.c.user_id == User.id) \
+        .outerjoin(lab_grade_sq, lab_grade_sq.c.user_id == User.id) \
+        .group_by(User.id)\
+        .order_by(desc('exam'), desc('offset')).all()
+    for item in students_list_with_grade:
+        user = item.User
+        user_id = user.id
+        student = {
+            'id': user_id,
+            'name': get_full_name(user),
+            'exam': item.exam,
+            'offset': item.offset
+        }
+        students.append(student)
     return groups, grades, students, group_id, subject_name
 
 
@@ -308,6 +377,26 @@ def get_grades(subject_id, group_id=None):
                            group_id=group_id,
                            active_tab='grade',
                            subject_name=subject_name
+                           )
+
+
+@tutors.route("/subjects/<string:subject_id>/auto_grades")
+@tutors.route("/subjects/<string:subject_id>/groups/<string:group_id>/auto_grades")
+@login_required
+def get_auto_grades(subject_id, group_id=None):
+    check_on_rights()
+    groups, grades, students, group_id, subject_name = get_auto_grades_list(subject_id, group_id)
+    return render_template('auto_grades.html',
+                           title="Аналитика / Автомат",
+                           groups=groups,
+                           grades=grades,
+                           students=students,
+                           subject_id=subject_id,
+                           group_id=group_id,
+                           active_tab='auto_grades',
+                           subject_name=subject_name,
+                           EXAM_ID=EXAM_ID,
+                           OFFSET_ID=OFFSET_ID
                            )
 
 
