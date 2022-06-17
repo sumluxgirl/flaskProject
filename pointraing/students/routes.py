@@ -36,7 +36,7 @@ def education(subject_id=None):
                                group_id=subject_id
                                )
     else:
-        attendance_count_user, count_hours, attendance, labs_count_user, labs_count, labs, grade = \
+        attendance_count_user, count_hours, attendance, labs_count_user, labs_count, labs, grade, auto_grade = \
             get_education_student_by_subject(current_user.id, subject_id)
 
         return render_template('education.html',
@@ -49,7 +49,8 @@ def education(subject_id=None):
                                labs=labs,
                                labs_count=labs_count,
                                labs_count_user=labs_count_user,
-                               grade=grade
+                               grade=grade,
+                               auto_grade=auto_grade
                                )
 
 

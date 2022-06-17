@@ -244,30 +244,6 @@ def activity_decline(activity_id, group_id, student_id):
                            )
 
 
-@deans_office.route('/rating/student/<string:student_id>/subject/<string:subject_id>')
-@login_required
-def students_rating_by_subject(student_id, subject_id):
-    check_on_rights()
-    student = User.query.get_or_404(student_id)
-    subject = Subject.query.get_or_404(subject_id)
-    full_name = get_full_name(student)
-    subject_name = subject.name
-    attendance_count_user, count_hours, attendance, labs_count_user, labs_count, labs, grade = \
-        get_education_student_by_subject(student_id, subject_id)
-    return render_template('rating_by_subject.html',
-                           title='Рейтинг студента по предмету',
-                           full_name=full_name,
-                           subject_name=subject_name,
-                           attendance_count_user=attendance_count_user,
-                           count_hours=count_hours,
-                           attendance=attendance,
-                           labs_count_user=labs_count_user,
-                           labs_count=labs_count,
-                           labs=labs,
-                           grade=grade
-                           )
-
-
 @deans_office.route('/admin')
 @deans_office.route('/admin/<string:entity>')
 @login_required

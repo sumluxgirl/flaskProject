@@ -13,7 +13,7 @@
     {% for item_grade in grades %}
         {% if item.exam or item.offset %}
             <td class="bg-success bg-opacity-10">
-                <a href="#">
+                <a href="{{ url_for('main.students_rating_by_subject', student_id=item.id, subject_id=subject_id) }}">
                     {% if item_grade.type.id == OFFSET_ID %}
                         {% if item.offset %}
                             Зачет

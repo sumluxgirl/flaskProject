@@ -3,13 +3,13 @@
 {% block content %}
     <nav aria-label="breadcrumb" class="pt-2">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{url_for('main.home')}}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('main.home') }}">Home</a></li>
             <li class="breadcrumb-item active" aria-current="page">Рейтинг студента по предмету</li>
         </ol>
     </nav>
     <div class="row pt-2">
         <h3>{{ full_name }}</h3>
         <h4>Предмет: {{ subject_name }}</h4>
-        {{ education_user(attendance_count_user, count_hours, attendance, labs_count_user, labs_count, labs, grade) }}
+        {{ education_user(attendance_count_user, count_hours, attendance, labs_count_user, labs_count, labs, grade, auto_grade) }}
     </div>
 {% endblock %}

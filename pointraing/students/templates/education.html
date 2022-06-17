@@ -2,7 +2,7 @@
 {% extends "student.html" %}
 {% block right %}
     {% if group_id %}
-        {{ education_user(attendance_count_user, count_hours, attendance, labs_count_user, labs_count, labs, grade) }}
+        {{ education_user(attendance_count_user, count_hours, attendance, labs_count_user, labs_count, labs, grade, auto_grade) }}
     {% else %}
         <p class="text-muted p-2">Похоже, что еще нет предметов для вашего обучения, обратитесь к администратору
             сиситемы</p>

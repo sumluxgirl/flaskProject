@@ -7,7 +7,7 @@ from datetime import datetime
 from pointraing.tutors.forms import AttendanceGradeForm, CHOICES, IS_EXIST, NOT_EXIST, ACTIVE, GradeUserForm, \
     CHOICES_GRADE_EXAM, CHOICES_GRADE_OFFSET, LabUserForm
 import uuid
-from pointraing.main.utils import get_full_name, is_tutor, EXAM_ID, OFFSET_ID
+from pointraing.main.utils import get_full_name, is_tutor, EXAM_ID, OFFSET_ID, get_analyze_grade
 
 tutors = Blueprint('tutors', __name__, template_folder='templates', url_prefix='/tutors',
                    static_folder='static')
@@ -296,52 +296,12 @@ def grades_lists(subject_id, group_id=None):
 
 
 def get_auto_grades_list(subject_id, group_id=None):
-    from sqlalchemy.sql import func, case, and_, desc
+    from sqlalchemy.sql import desc
     groups, current_group, students_list, group_id, subject_name = get_main_lists(subject_id, group_id)
     grades = Grade.query \
         .filter(Grade.subject_id == subject_id).order_by(Grade.date)
     students = []
-    attendance_sq = Attendance.query \
-        .with_entities(Attendance.id) \
-        .filter(Attendance.subject_id == subject_id) \
-        .filter(Attendance.group_id == group_id)
-    attendance_grade_sq = AttendanceGrade.query \
-        .with_entities(AttendanceGrade.id, AttendanceGrade.user_id, AttendanceGrade.active) \
-        .filter(AttendanceGrade.attendance_id.in_(attendance_sq)).subquery()
-    attendance_user_xpr = case([(attendance_grade_sq.c.id.is_not(None), 1)], else_=0)
-    attendance_active_user_xpr = case([(attendance_grade_sq.c.active.is_not(None), attendance_grade_sq.c.active)],
-                                      else_=0)
-    labs_sq_xpr = case([(LabsGrade.date < Lab.deadline, 1)], else_=0)
-    lab_grade_sq = LabsGrade.query \
-        .with_entities(LabsGrade.user_id,
-                       func.sum(labs_sq_xpr).label('in_time_count'),
-                       func.count(LabsGrade.id).label('count')
-                       ) \
-        .join(Lab) \
-        .filter(Lab.subject_id == subject_id) \
-        .group_by(LabsGrade.user_id).subquery()
-    max_attendance_count = attendance_sq.count()
-    max_lab_count = Lab.query.filter(Lab.subject_id == subject_id).count()
-    attendance_count = func.sum(attendance_user_xpr).label('attendance_count')
-    attendance_active_count = func.sum(attendance_active_user_xpr).label('attendance_active_count')
-    lab_in_time_count = lab_grade_sq.c.in_time_count.label('lab_in_time_count')
-    lab_count = lab_grade_sq.c.count.label('lab_count')
-    attendance_count_user = attendance_count * 100 / max_attendance_count
-    attendance_active_count_user = attendance_active_count * 100 / max_attendance_count
-    lab_in_time_user_count = lab_in_time_count * 100 / max_lab_count
-    excellent_xpr = case([(and_(attendance_count_user >= 75,
-                                attendance_active_count_user >= 50,
-                                lab_in_time_user_count == 100), 5)], else_=0)
-    good_xpr = case([(and_(attendance_count_user >= 60,
-                           attendance_active_count_user >= 30,
-                           lab_in_time_user_count >= 50), 4)], else_=0)
-    adequately_xpr = case([(and_(attendance_count_user >= 50,
-                                 attendance_active_count_user >= 10,
-                                 lab_count / max_lab_count == 1), 3)], else_=0)
-    offset_xpr = case([(and_(attendance_count_user >= 60,
-                             attendance_active_count_user >= 40,
-                             lab_in_time_user_count >= 50), 1)], else_=0)
-    grade_xpr = func.max(excellent_xpr, good_xpr, adequately_xpr)
+    grade_xpr, offset_xpr, attendance_grade_sq, lab_grade_sq = get_analyze_grade(subject_id, group_id)
     students_list_with_grade = User.query \
         .add_columns(grade_xpr.label('exam'), offset_xpr.label('offset')) \
         .filter(User.group_id == group_id) \

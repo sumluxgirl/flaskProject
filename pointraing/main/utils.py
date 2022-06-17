@@ -31,6 +31,7 @@ def create_id():
 
 def get_education_student_by_subject(student_id, subject_id):
     from pointraing.models import AttendanceGrade, Attendance, LabsGrade, Lab, GradeUsers, Grade, TypeGrade, User
+    from pointraing import db
     student = User.query.get_or_404(student_id)
     attendance_user = AttendanceGrade.query \
         .filter(AttendanceGrade.user_id == student.id).subquery()
@@ -66,7 +67,17 @@ def get_education_student_by_subject(student_id, subject_id):
         .group_by(GradeUsers.id) \
         .all()
 
-    return attendance_count_user, len(attendance), attendance, labs_count_user, len(labs), labs, grade
+    group_id = student.group_id
+    grade_xpr, offset_xpr, attendance_grade_sq, lab_grade_sq = get_analyze_grade(subject_id, group_id)
+    auto_grade = db.session.query(grade_xpr.label('exam'), offset_xpr.label('offset')) \
+        .select_from(User) \
+        .filter(User.id == student_id) \
+        .outerjoin(attendance_grade_sq, attendance_grade_sq.c.user_id == User.id) \
+        .outerjoin(lab_grade_sq, lab_grade_sq.c.user_id == User.id) \
+        .group_by(User.id) \
+        .first()
+
+    return attendance_count_user, len(attendance), attendance, labs_count_user, len(labs), labs, grade, auto_grade
 
 
 def auto_grade_user_by_subject(user_id, subject_id):
@@ -99,3 +110,51 @@ def auto_grade_user_by_subject(user_id, subject_id):
         .group_by(LabsGrade.id).first()
     lab_user_count = lab_user.count if lab_user else 0
     print(max_attendance_count, attendance_user_count, attendance_active_user_count, max_lab_count, lab_user_count)
+
+
+def get_analyze_grade(subject_id, group_id):
+    from sqlalchemy.sql import func, case, and_
+    from pointraing.models import Attendance, AttendanceGrade, LabsGrade, Lab
+    attendance_sq = Attendance.query \
+        .with_entities(Attendance.id) \
+        .filter(Attendance.subject_id == subject_id) \
+        .filter(Attendance.group_id == group_id)
+    attendance_grade_sq = AttendanceGrade.query \
+        .with_entities(AttendanceGrade.id, AttendanceGrade.user_id, AttendanceGrade.active) \
+        .filter(AttendanceGrade.attendance_id.in_(attendance_sq)).subquery()
+    attendance_user_xpr = case([(attendance_grade_sq.c.id.is_not(None), 1)], else_=0)
+    attendance_active_user_xpr = case([(attendance_grade_sq.c.active.is_not(None), attendance_grade_sq.c.active)],
+                                      else_=0)
+    labs_sq_xpr = case([(LabsGrade.date < Lab.deadline, 1)], else_=0)
+    lab_grade_sq = LabsGrade.query \
+        .with_entities(LabsGrade.user_id,
+                       func.sum(labs_sq_xpr).label('in_time_count'),
+                       func.count(LabsGrade.id).label('count')
+                       ) \
+        .join(Lab) \
+        .filter(Lab.subject_id == subject_id) \
+        .group_by(LabsGrade.user_id).subquery()
+    max_attendance_count = attendance_sq.count()
+    max_lab_count = Lab.query.filter(Lab.subject_id == subject_id).count()
+    attendance_count = func.sum(attendance_user_xpr).label('attendance_count')
+    attendance_active_count = func.sum(attendance_active_user_xpr).label('attendance_active_count')
+    lab_in_time_count = lab_grade_sq.c.in_time_count.label('lab_in_time_count')
+    lab_count = lab_grade_sq.c.count.label('lab_count')
+    attendance_count_user = attendance_count * 100 / max_attendance_count
+    attendance_active_count_user = attendance_active_count * 100 / max_attendance_count
+    lab_in_time_user_count = lab_in_time_count * 100 / max_lab_count
+    excellent_xpr = case([(and_(attendance_count_user >= 75,
+                                attendance_active_count_user >= 50,
+                                lab_in_time_user_count == 100), 5)], else_=0)
+    good_xpr = case([(and_(attendance_count_user >= 60,
+                           attendance_active_count_user >= 30,
+                           lab_in_time_user_count >= 50), 4)], else_=0)
+    adequately_xpr = case([(and_(attendance_count_user >= 50,
+                                 attendance_active_count_user >= 10,
+                                 lab_count / max_lab_count == 1), 3)], else_=0)
+    offset_xpr = case([(and_(attendance_count_user >= 60,
+                             attendance_active_count_user >= 40,
+                             lab_in_time_user_count >= 50), 1)], else_=0)
+    grade_xpr = func.max(excellent_xpr, good_xpr, adequately_xpr)
+
+    return grade_xpr, offset_xpr, attendance_grade_sq, lab_grade_sq

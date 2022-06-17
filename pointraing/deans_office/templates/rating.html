@@ -52,7 +52,7 @@
                                     <li>Экзамен {{ badgeItem(item.grade_count, item.grade_max_count) }}</li>
                                 </ul>
                                 <a class="btn btn-outline-info"
-                                   href="{{ url_for('deans_office.students_rating_by_subject', student_id=student_id, subject_id=item.id) }}"
+                                   href="{{ url_for('main.students_rating_by_subject', student_id=student_id, subject_id=item.id) }}"
                                    role="button">Подробнее</a>
                             </div>
                         </div>
