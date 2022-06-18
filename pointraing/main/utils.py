@@ -1,12 +1,12 @@
 from flask_login import current_user
 import uuid
 
-ROLE_STUDENT = 'b1cefe7269bd40bc97f74f0bcbcb5797'
-ROLE_TUTOR = '45fbe5b876c740a98d11348ac6d43f92'
-ROLE_DECANAT = 'f089ec17107041868d18827b3e5e1b53'
+ROLE_STUDENT = 'c35dcc2e5caf46f9868b27f470f574a2'
+ROLE_TUTOR = '1090cfeca7b84ac483156a0c7fb15278'
+ROLE_DECANAT = '1275694c4b1147239da3cba05c22dc75'
 
-EXAM_ID = 'ee4213bae38f44989f9716b6fccd440e'
-OFFSET_ID = 'a7f586cca2bf41f2846de0bb67bc2109'
+EXAM_ID = 'b981914984da4935b406ded2c544a820'
+OFFSET_ID = '693821cc8a5f494ebbcaf5550d28fb62'
 
 
 def is_student():
@@ -81,7 +81,7 @@ def get_education_student_by_subject(student_id, subject_id):
 
 
 def get_analyze_grade(subject_id, group_id):
-    from sqlalchemy.sql import func, case, and_
+    from sqlalchemy.sql import func, and_
     from pointraing.models import Attendance, AttendanceGrade, LabsGrade, Lab
     attendance_sq = Attendance.query \
         .with_entities(Attendance.id) \
@@ -90,10 +90,10 @@ def get_analyze_grade(subject_id, group_id):
     attendance_grade_sq = AttendanceGrade.query \
         .with_entities(AttendanceGrade.id, AttendanceGrade.user_id, AttendanceGrade.active) \
         .filter(AttendanceGrade.attendance_id.in_(attendance_sq)).subquery()
-    attendance_user_xpr = case([(attendance_grade_sq.c.id.is_not(None), 1)], else_=0)
-    attendance_active_user_xpr = case([(attendance_grade_sq.c.active.is_not(None), attendance_grade_sq.c.active)],
-                                      else_=0)
-    labs_sq_xpr = case([(LabsGrade.date < Lab.deadline, 1)], else_=0)
+    attendance_user_xpr = func.IF(attendance_grade_sq.c.id.is_not(None), 1, 0)
+    attendance_active_user_xpr = func.IF(attendance_grade_sq.c.active.is_not(None), attendance_grade_sq.c.active,
+                                         0)
+    labs_sq_xpr = func.IF(LabsGrade.date < Lab.deadline, 1, 0)
     lab_grade_sq = LabsGrade.query \
         .with_entities(LabsGrade.user_id,
                        func.sum(labs_sq_xpr).label('in_time_count'),
@@ -111,18 +111,18 @@ def get_analyze_grade(subject_id, group_id):
     attendance_count_user = attendance_count * 100 / max_attendance_count
     attendance_active_count_user = attendance_active_count * 100 / max_attendance_count
     lab_in_time_user_count = lab_in_time_count * 100 / max_lab_count
-    excellent_xpr = case([(and_(attendance_count_user >= 75,
-                                attendance_active_count_user >= 50,
-                                lab_in_time_user_count == 100), 5)], else_=0)
-    good_xpr = case([(and_(attendance_count_user >= 60,
-                           attendance_active_count_user >= 30,
-                           lab_in_time_user_count >= 50), 4)], else_=0)
-    adequately_xpr = case([(and_(attendance_count_user >= 50,
-                                 attendance_active_count_user >= 10,
-                                 lab_count / max_lab_count == 1), 3)], else_=0)
-    offset_xpr = case([(and_(attendance_count_user >= 60,
-                             attendance_active_count_user >= 40,
-                             lab_in_time_user_count >= 50), 1)], else_=0)
-    grade_xpr = func.max(excellent_xpr, good_xpr, adequately_xpr)
+    excellent_xpr = func.IF(and_(attendance_count_user >= 75,
+                                 attendance_active_count_user >= 50,
+                                 lab_in_time_user_count == 100), 5, 0)
+    good_xpr = func.IF(and_(attendance_count_user >= 60,
+                            attendance_active_count_user >= 30,
+                            lab_in_time_user_count >= 50), 4, 0)
+    adequately_xpr = func.IF(and_(attendance_count_user >= 50,
+                                  attendance_active_count_user >= 10,
+                                  lab_count / max_lab_count == 1), 3, 0)
+    offset_xpr = func.IF(and_(attendance_count_user >= 60,
+                              attendance_active_count_user >= 40,
+                              lab_in_time_user_count >= 50), 1, 0)
+    grade_xpr = func.GREATEST(excellent_xpr, good_xpr, adequately_xpr)
 
     return grade_xpr, offset_xpr, attendance_grade_sq, lab_grade_sq

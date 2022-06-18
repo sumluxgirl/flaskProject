@@ -25,12 +25,9 @@ class User(db.Model, UserMixin):
     patronymic = db.Column(db.String(120), nullable=False)
     login = db.Column(db.String(20), unique=True, nullable=False)
     password = db.Column(db.String(60), nullable=False)
-    role_id = db.Column(db.String, db.ForeignKey('role.id'), nullable=False)
+    role_id = db.Column(db.String(32), db.ForeignKey('role.id'), nullable=False)
     role = db.relationship('Role', backref=db.backref('users', lazy=True))
-    group_id = db.Column(db.String, db.ForeignKey('group.id'), nullable=True)
-
-    # labs = db.relationship('Labs', secondary=labs_grade, lazy='subquery',
-    #                        backref=db.backref('users', lazy=True))
+    group_id = db.Column(db.String(32), db.ForeignKey('group.id'), nullable=True)
 
     def get_reset_token(self, expires_sec=1800):
         """
