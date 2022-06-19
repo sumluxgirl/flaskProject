@@ -23,6 +23,22 @@ Point rating system USATU
     cd pointrating/static
     npm i bootstrap-icons
 ```
+###Linux
+```
+    git clone https://github.com/sumluxgirl/flaskProject.git
+    cd flaskProject
+    python3 -m venv venv
+    . venv/bin/activate
+    pip install Flask
+    pip install -U Flask-SQLAlchemy
+    pip install flask-bcrypt
+    pip install flask-login
+    pip install -U Flask-WTF
+    pip install pyjwt
+    pip install pymysql
+    cd pointrating/static
+    npm i bootstrap-icons
+```
 ##quick start
 ```
     set FLASK_APP=app.py
