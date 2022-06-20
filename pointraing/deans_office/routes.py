@@ -1,8 +1,8 @@
 from flask import Blueprint, render_template, flash, redirect, url_for, abort
 from flask_login import login_required
 from pointraing.models import Group, User, Attendance, Activity, AttendanceGrade, Lab, LabsGrade, Grade, GradeUsers, \
-    TypeGrade, RateActivity, Subject
-from pointraing.main.utils import get_full_name, get_education_student_by_subject, is_deans_office
+    TypeGrade, RateActivity
+from pointraing.main.utils import get_full_name, is_deans_office
 from pointraing import db
 from pointraing.deans_office.forms import DeclineActivityForm
 from sqlalchemy.sql import func, case, desc
@@ -21,7 +21,7 @@ def check_on_rights():
 @login_required
 def rating(group_id=None, student_id=None):
     check_on_rights()
-    groups = Group.query.order_by(Group.name).all()
+    groups = Group.query.order_by(Group.name).limit(100).all()
     if not group_id:
         if len(groups) > 0:
             current_group = groups[0]
@@ -79,7 +79,7 @@ def get_attendance_rating_by_user(student_id, subject_id, subject, attendance_sq
                      .with_entities(Attendance.id)
                      .filter(Attendance.subject_id == subject_id))
                 ) \
-        .all()
+        .limit(100).all()
     for attendance_item in attendance_user:
         attendance_count = attendance_count + 1
         if attendance_item.active > 0:
@@ -93,7 +93,7 @@ def get_labs_rating_by_user(student_id, subject_id):
     lab_sq = Lab.query.with_entities(Lab.id).filter(Lab.subject_id == subject_id)
     lab_user = LabsGrade.query \
         .filter(LabsGrade.user_id == student_id) \
-        .filter(LabsGrade.lab_id.in_(lab_sq)).all()
+        .filter(LabsGrade.lab_id.in_(lab_sq)).limit(100).all()
     for item_lab_user in lab_user:
         if (item_lab_user.date - item_lab_user.lab.deadline).total_seconds() < 0:
             lab_count = lab_count + 2
@@ -110,7 +110,7 @@ def get_grades_rating_by_user(student_id, subject_id):
     grade_user = GradeUsers.query \
         .with_entities(GradeUsers.value) \
         .filter(GradeUsers.user_id == student_id) \
-        .filter(GradeUsers.grade_id.in_(grade_sq)).all()
+        .filter(GradeUsers.grade_id.in_(grade_sq)).limit(100).all()
     for item_grade_user in grade_user:
         grade_count = grade_count + item_grade_user.value
 
@@ -158,7 +158,7 @@ def get_user_subjects_rating(group_id, student_id):
 
 
 def get_user_activity_rating(student_id):
-    activity_by_user = Activity.query.filter(Activity.user_id == student_id).order_by(Activity.status).all()
+    activity_by_user = Activity.query.filter(Activity.user_id == student_id).order_by(Activity.status).limit(100).all()
     activity_by_user_count = Activity.query \
         .join(Activity.rate) \
         .with_entities(func.sum(RateActivity.value).label('sum_activity')) \
@@ -204,7 +204,7 @@ def get_students_list_with_rating(group_id):
         .outerjoin(labs_sq, labs_sq.c.user_id == User.id) \
         .filter(User.group_id == group_id) \
         .group_by(User.id) \
-        .order_by(desc('count')).all()
+        .order_by(desc('count')).limit(100).all()
     return students_list
 
 

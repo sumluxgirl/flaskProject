@@ -22,7 +22,7 @@ def check_on_rights():
 @login_required
 def subjects():
     check_on_rights()
-    subjects_list = Subject.query.all()
+    subjects_list = Subject.query.limit(100).all()
     return render_template('subjects.html',
                            title="Учебные предметы",
                            subjects=subjects_list
@@ -41,7 +41,7 @@ def get_main_lists(subject_id, group_id=None):
         flash('Данные по группам не заполнены, обратитесь к администратору системы', 'warning')
         return redirect(url_for('main.home'))
     current_group = Group.query.get_or_404(group_id)
-    students_list = current_group.users.order_by(User.surname).all()
+    students_list = current_group.users.order_by(User.surname).limit(100).all()
     return (
         groups,
         current_group,
@@ -68,7 +68,7 @@ def get_groups(subject_id, group_id=None):
         }
         attendance_grade = AttendanceGrade.query \
             .filter(AttendanceGrade.user_id == item.id) \
-            .filter(AttendanceGrade.attendance_id.in_(attendance_sq)).all()
+            .filter(AttendanceGrade.attendance_id.in_(attendance_sq)).limit(100).all()
         for att_item in attendance_grade:
             student.update({
                 att_item.attendance_id: {
@@ -181,7 +181,7 @@ def labs_list(subject_id, group_id=None):
         }
         labs_grade = LabsGrade.query \
             .filter(LabsGrade.user_id == item.id) \
-            .filter(LabsGrade.lab_id.in_(lab_sq)).all()
+            .filter(LabsGrade.lab_id.in_(lab_sq)).limit(100).all()
         for lab_item in labs_grade:
             student.update({
                 lab_item.lab_id: {
@@ -282,7 +282,7 @@ def grades_lists(subject_id, group_id=None):
         }
         grade_users = GradeUsers.query \
             .filter(GradeUsers.user_id == user_id) \
-            .filter(GradeUsers.grade_id.in_(grades_sq)).all()
+            .filter(GradeUsers.grade_id.in_(grades_sq)).limit(100).all()
         for grade_item in grade_users:
             student.update({
                 grade_item.grade_id: {
@@ -308,7 +308,7 @@ def get_auto_grades_list(subject_id, group_id=None):
         .outerjoin(attendance_grade_sq, attendance_grade_sq.c.user_id == User.id) \
         .outerjoin(lab_grade_sq, lab_grade_sq.c.user_id == User.id) \
         .group_by(User.id)\
-        .order_by(desc('exam'), desc('offset')).all()
+        .order_by(desc('exam'), desc('offset')).limit(100).all()
     for item in students_list_with_grade:
         user = item.User
         user_id = user.id

@@ -47,7 +47,7 @@ def get_education_student_by_subject(student_id, subject_id):
         .filter(Attendance.group_id == student.group_id) \
         .add_columns(attendance_user.c.id, attendance_user.c.active) \
         .outerjoin(attendance_user, Attendance.id == attendance_user.c.attendance_id) \
-        .order_by(Attendance.date).all()
+        .order_by(Attendance.date).limit(100).all()
     attendance_count_user = AttendanceGrade.query \
         .join(AttendanceGrade.attendance) \
         .filter(Attendance.subject_id == subject_id) \
@@ -59,7 +59,7 @@ def get_education_student_by_subject(student_id, subject_id):
         .filter(Lab.subject_id == subject_id) \
         .add_columns(labs_user_subq.c.id, labs_user_subq.c.date) \
         .outerjoin(labs_user_subq, Lab.id == labs_user_subq.c.lab_id) \
-        .all()
+        .limit(100).all()
     labs_count_user = LabsGrade.query \
         .join(Lab, LabsGrade.lab) \
         .filter(Lab.subject_id == subject_id) \
@@ -72,7 +72,7 @@ def get_education_student_by_subject(student_id, subject_id):
         .filter(GradeUsers.user_id == student.id) \
         .filter(Grade.subject_id == subject_id) \
         .group_by(GradeUsers.id) \
-        .all()
+        .limit(100).all()
 
     group_id = student.group_id
     grade_xpr, offset_xpr, attendance_grade_sq, lab_grade_sq = get_analyze_grade(subject_id, group_id)

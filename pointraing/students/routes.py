@@ -22,7 +22,7 @@ def check_on_rights():
 def education(subject_id=None):
     check_on_rights()
     group = current_user.group
-    attendance_subjects = Attendance.query.filter_by(group_id=group.id).group_by(Attendance.subject_id).all()
+    attendance_subjects = Attendance.query.filter_by(group_id=group.id).group_by(Attendance.subject_id).limit(100).all()
     subjects = []
     for i in attendance_subjects:
         subjects.append(i.subject)
@@ -55,7 +55,7 @@ def education(subject_id=None):
 
 
 def get_students_activity():
-    return ActivityType.query.all()
+    return ActivityType.query.limit(100).all()
 
 
 @students.route("/activity")
@@ -69,7 +69,7 @@ def activity(activity_id=None):
 
     activity_by_user = Activity.query \
         .filter(Activity.user_id == current_user.id) \
-        .filter(Activity.type_id == activity_id).all()
+        .filter(Activity.type_id == activity_id).limit(100).all()
     return render_template('activity.html',
                            active_tab='activity',
                            right_group=activity_list,

@@ -273,7 +273,7 @@ def subject_remove(item_id):
 def lab_update(item_id, title, groups):
     lab = Lab.query.get_or_404(item_id) if item_id else None
     form = LabForm()
-    form.subject.choices = [(g.id, g.name) for g in Subject.query.all()]
+    form.subject.choices = [(g.id, g.name) for g in Subject.query.limit(100).all()]
     if form.validate_on_submit():
         if lab:
             lab.name = form.name.data
@@ -311,9 +311,9 @@ def lab_remove(item_id):
 def attendance_update(item_id, title, groups):
     attendance = Attendance.query.get_or_404(item_id) if item_id else None
     form = AttendanceForm()
-    form.subject.choices = [(g.id, g.name) for g in Subject.query.all()]
-    form.group.choices = [(g.id, g.name) for g in Group.query.all()]
-    form.type.choices = [(g.id, g.name) for g in AttendanceType.query.all()]
+    form.subject.choices = [(g.id, g.name) for g in Subject.query.limit(100).all()]
+    form.group.choices = [(g.id, g.name) for g in Group.query.limit(100).all()]
+    form.type.choices = [(g.id, g.name) for g in AttendanceType.query.limit(100).all()]
     if form.validate_on_submit():
         if attendance:
             attendance.subject_id = form.subject.data
@@ -383,8 +383,8 @@ def attendance_type_remove(item_id):
 def grade_update(item_id, title, groups):
     grade = Grade.query.get_or_404(item_id) if item_id else None
     form = GradeForm()
-    form.subject.choices = [(g.id, g.name) for g in Subject.query.all()]
-    form.type.choices = [(g.id, g.name) for g in TypeGrade.query.all()]
+    form.subject.choices = [(g.id, g.name) for g in Subject.query.limit(100).all()]
+    form.type.choices = [(g.id, g.name) for g in TypeGrade.query.limit(100).all()]
     if form.validate_on_submit():
         if grade:
             grade.subject_id = form.subject.data
@@ -459,8 +459,8 @@ def activity_sub_type_remove(item_id):
 def user_update(item_id, title, groups):
     user = User.query.get_or_404(item_id) if item_id else None
     form = UserForm()
-    form.role.choices = [(g.id, g.name) for g in Role.query.all()]
-    form.group.choices = [(g.id, g.name) for g in Group.query.all()]
+    form.role.choices = [(g.id, g.name) for g in Role.query.limit(100).all()]
+    form.group.choices = [(g.id, g.name) for g in Group.query.limit(100).all()]
     if not item_id:
         from wtforms.validators import DataRequired
         form.password.validators = [DataRequired()]
@@ -512,8 +512,8 @@ def user_remove(item_id):
 def rate_activity_update(item_id, title, groups):
     rate = RateActivity.query.get_or_404(item_id) if item_id else None
     form = RateActivityForm()
-    form.type.choices = [(g.id, g.name) for g in ActivityType.query.all()]
-    form.sub_type.choices = [(g.id, g.name) for g in ActivitySubType.query.all()]
+    form.type.choices = [(g.id, g.name) for g in ActivityType.query.limit(100).all()]
+    form.sub_type.choices = [(g.id, g.name) for g in ActivitySubType.query.limit(100).all()]
     if form.validate_on_submit():
         if rate:
             rate.activity_type_id = form.type.data
