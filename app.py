@@ -13,6 +13,7 @@ def adding_data():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
+    # app.run(debug=True)
     # adding_data() #Run on first
 
