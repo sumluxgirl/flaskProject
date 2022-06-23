@@ -2,7 +2,7 @@ from pointraing import db
 from flask import render_template, url_for, redirect, request, flash, abort, send_from_directory, current_app, Blueprint
 from flask_login import current_user, login_required
 from pointraing.students.forms import StudentActivityForm
-from pointraing.models import Attendance, ActivityType, RateActivity, Activity
+from pointraing.models import Attendance, ActivityType, RateActivity, Activity, Subject
 from pointraing.main.utils import get_education_student_by_subject, is_student
 import uuid
 import os
@@ -22,10 +22,10 @@ def check_on_rights():
 def education(subject_id=None):
     check_on_rights()
     group = current_user.group
-    attendance_subjects = Attendance.query.filter_by(group_id=group.id).group_by(Attendance.subject_id).limit(100).all()
-    subjects = []
-    for i in attendance_subjects:
-        subjects.append(i.subject)
+    subjects = Subject.query\
+        .join(Attendance) \
+        .filter_by(group_id=group.id)\
+        .group_by(Subject.id).limit(100).all()
     if not subject_id and len(subjects) > 0:
         subject_id = subjects[0].id
 
