@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, flash, redirect, url_for, abort
 from flask_login import login_required
 from pointraing.models import Group, User, Attendance, Activity, AttendanceGrade, Lab, LabsGrade, Grade, GradeUsers, \
-    TypeGrade, RateActivity
+    TypeGrade, RateActivity, Subject
 from pointraing.main.utils import get_full_name, is_deans_office
 from pointraing import db
 from pointraing.deans_office.forms import DeclineActivityForm
@@ -144,12 +144,14 @@ def get_user_rating_by_subject(subject, student_id, attendance_sq):
 
 def get_user_subjects_rating(group_id, student_id):
     attendance_sq = Attendance.query.filter_by(group_id=group_id)
-    attendance_subjects = attendance_sq.group_by(Attendance.subject_id).all()
+    attendance_subjects = Subject.query\
+        .join(Attendance) \
+        .filter_by(group_id=group_id)\
+        .group_by(Subject.id)
     subjects = []
     subjects_count = 0
     subjects_max_count = 0
-    for i in attendance_subjects:
-        subject = i.subject
+    for subject in attendance_subjects:
         count_subj, max_count, subject_rating = get_user_rating_by_subject(subject, student_id, attendance_sq)
         subjects.append(subject_rating)
         subjects_max_count = subjects_max_count + max_count
