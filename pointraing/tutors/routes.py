@@ -32,9 +32,8 @@ def subjects():
 def get_main_lists(subject_id, group_id=None):
     subject = Subject.query.get_or_404(subject_id)
     subject_name = subject.name
-    groups = []
-    for attendance in Attendance.query.filter(Attendance.subject_id == subject_id).group_by(Attendance.group_id):
-        groups.append(attendance.group)
+    groups = Group.query.join(Attendance)\
+        .filter(Attendance.subject_id == subject_id).group_by(Group.id).all()
     if not group_id and len(groups) > 0:
         group_id = groups[0].id
     if not group_id:
